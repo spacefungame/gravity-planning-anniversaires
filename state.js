@@ -188,7 +188,12 @@ class AppStateManager {
 
                 if (response.ok) {
                     const json = await response.json();
-                    const rawBookings = (json.data || []).filter(b => b.state !== 'unconfirmed' && b.state !== 'cancelled' && b.state !== 'deleted');
+                    const rawBookings = (json.data || []).filter(b => {
+                        if (b.state === 'cancelled' || b.state === 'deleted') return false;
+                        // Conserver les 'propositions' (unconfirmed) UNIQUEMENT si elles ont un client attaché (ignore les paniers fantômes)
+                        if (b.state === 'unconfirmed' && !b.client_id && !b.order_item?.order?.client_id && !b.order?.client_id) return false;
+                        return true;
+                    });
                     
                     // --- NOUVEAU : Récupérer les infos clients et les items supplémentaires ---
                     const orderIds = Array.from(new Set(rawBookings.map(b => b.order_item?.order_id || b.sale_id || b.order_id).filter(Boolean)));
@@ -743,9 +748,9 @@ class AppStateManager {
                 const gap = currStartMin - prevEndMin;
                 const isNewAccueil = (curr.nom || "").toLowerCase().includes("accueil") && gap >= 30;
 
-                // Si l'écart entre la fin de l'activité précédente et le début de la nouvelle est >= 60 min,
+                // Si l'écart entre la fin de l'activité précédente et le début de la nouvelle est >= 180 min,
                 // OU si une nouvelle activité "Accueil" démarre avec au moins 30 min d'écart, c'est un nouveau groupe / nouvelle arrivée !
-                if (gap >= 60 || isNewAccueil) {
+                if (gap >= 180 || isNewAccueil) {
                     sessions.push(currentSession);
                     currentSession = [curr];
                 } else {
