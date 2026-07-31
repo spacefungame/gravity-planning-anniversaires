@@ -190,8 +190,13 @@ class AppStateManager {
                     const json = await response.json();
                     const rawBookings = (json.data || []).filter(b => {
                         if (b.state === 'cancelled' || b.state === 'deleted') return false;
-                        // Conserver les 'propositions' (unconfirmed) UNIQUEMENT si elles ont un client attaché (ignore les paniers fantômes)
-                        if (b.state === 'unconfirmed' && !b.client_id && !b.order_item?.order?.client_id && !b.order?.client_id) return false;
+                        
+                        const orderType = b.order_item?.order?.type || b.order?.type;
+                        
+                        // Conserver les 'propositions' (unconfirmed) si elles ont été créées par le staff (sale_order)
+                        // Rejeter les paniers abandonnés sur le site web (front_order)
+                        if (b.state === 'unconfirmed' && orderType === 'front_order') return false;
+                        
                         return true;
                     });
                     
@@ -748,9 +753,9 @@ class AppStateManager {
                 const gap = currStartMin - prevEndMin;
                 const isNewAccueil = (curr.nom || "").toLowerCase().includes("accueil") && gap >= 30;
 
-                // Si l'écart entre la fin de l'activité précédente et le début de la nouvelle est >= 180 min,
+                // Si l'écart entre la fin de l'activité précédente et le début de la nouvelle est >= 90 min,
                 // OU si une nouvelle activité "Accueil" démarre avec au moins 30 min d'écart, c'est un nouveau groupe / nouvelle arrivée !
-                if (gap >= 180 || isNewAccueil) {
+                if (gap >= 90 || isNewAccueil) {
                     sessions.push(currentSession);
                     currentSession = [curr];
                 } else {
