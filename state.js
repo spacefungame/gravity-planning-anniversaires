@@ -501,20 +501,23 @@ class AppStateManager {
             group.forEach(act => {
                 const rp = act.raw_payload || {};
                 const typeRaw = (rp.type || act.type || "").toUpperCase();
-                // Ignorer les produits injectés pour le calcul du nom du pack
-                if (typeRaw === "PRODUCT" || typeRaw === "OPTION" || typeRaw === "PACK") return;
+                // Ignorer les produits injectés pour le calcul du nom du pack (produits et options)
+                if (typeRaw === "PRODUCT" || typeRaw === "OPTION") return;
                 
                 const itemLabel = rp.order_item?.label || rp.product?.label || rp.pack_label || rp.activity?.product_label || act.pack_label || act.product_label;
                 if (itemLabel && typeof itemLabel === 'string' && itemLabel.trim() && !itemLabel.toLowerCase().includes("accueil") && !itemLabel.toLowerCase().includes("table réservée")) {
                     orderPacks.add(itemLabel.trim());
                 }
             });
+            let originalPackStr = "";
             if (orderPacks.size > 0) {
+                originalPackStr = Array.from(orderPacks).join(" + ");
                 const distinctActTypes = new Set(group.map(a => (a.label || a.nom || "").replace(/▶\s*/g, '').trim()).filter(n => !n.toLowerCase().includes("accueil") && !n.toLowerCase().includes("table réservée")));
+                
                 if (distinctActTypes.size > orderPacks.size && orderPacks.size === 1) {
-                    nomPack = this.computePackLabelFromActivities(group, Array.from(orderPacks).join(" + "));
+                    nomPack = this.computePackLabelFromActivities(group, originalPackStr);
                 } else {
-                    nomPack = Array.from(orderPacks).join(" + ");
+                    nomPack = originalPackStr;
                 }
             } else {
                 const parentOrderLabel = group[0]?.raw_payload?.order?.label || group[0]?.raw_payload?.order?.product_label || group[0]?.raw_payload?.order?.name || "";
@@ -547,7 +550,8 @@ class AppStateManager {
                     lblLower.includes("café") || lblLower.includes("cafe");
 
                 // Filtre anti-pack: ne pas afficher l'activité principale dans les options
-                const matchesNomPack = nomPack && (nomPack.toLowerCase().includes(lblLower) || lblLower.includes(nomPack.toLowerCase()));
+                const matchesNomPack = (nomPack && (nomPack.toLowerCase().includes(lblLower) || lblLower.includes(nomPack.toLowerCase()))) ||
+                                       (originalPackStr && (originalPackStr.toLowerCase().includes(lblLower) || lblLower.includes(originalPackStr.toLowerCase())));
                 const isAlreadyActivity = activitiesForSchedule.some(mainAct => {
                     const mainLbl = (mainAct.label || mainAct.nom || "").toLowerCase();
                     if (!mainLbl || !lblLower) return false;
@@ -572,7 +576,8 @@ class AppStateManager {
                                 const oiType = (oi.type || "").toUpperCase();
                                 const oiLabel = (oi.label || oi.nom || "").trim();
                                 const oiLower = oiLabel.toLowerCase();
-                                const oiMatchesPack = nomPack.toLowerCase().includes(oiLower) || oiLower.includes(nomPack.toLowerCase());
+                                const oiMatchesPack = (nomPack.toLowerCase().includes(oiLower) || oiLower.includes(nomPack.toLowerCase())) ||
+                                                      (originalPackStr && (originalPackStr.toLowerCase().includes(oiLower) || oiLower.includes(originalPackStr.toLowerCase())));
                                 
                                 if (oiLabel && !oiMatchesPack && (oiType === "PRODUCT" || oiType === "OPTION" || oi.category?.toLowerCase().includes("option") || oi.category?.toLowerCase().includes("produit") || !oi.start_at)) {
                                     const exQty = optionsMap.get(oiLabel) || 0;
