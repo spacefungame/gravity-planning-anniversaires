@@ -193,6 +193,9 @@ class AppStateManager {
                         
                         const orderType = b.order_item?.order?.type || b.order?.type;
                         
+                        // Exclure les blocs fantômes/orphelins (souvent d'anciennes modifications de propositions)
+                        if (b.state === 'unconfirmed' && !b.order_item && !b.sale_item_id) return false;
+
                         // Conserver les 'propositions' (unconfirmed) si elles ont été créées par le staff (sale_order)
                         // Rejeter les paniers abandonnés sur le site web (front_order)
                         if (b.state === 'unconfirmed' && orderType === 'front_order') return false;
