@@ -444,7 +444,14 @@ class AppStateManager {
             let maxEndMs = earliestDate.getTime();
             activitiesForSchedule.forEach(act => {
                 const sMs = new Date(act.start_at || act.created_at || Date.now()).getTime();
-                const eMs = act.end_at ? new Date(act.end_at).getTime() : sMs + (Number(act.duration) || 60) * 60000;
+                let eMs = act.end_at ? new Date(act.end_at).getTime() : sMs + (Number(act.duration) || 60) * 60000;
+                
+                // --- NOUVEAU: SURPASSER LA DUREE DE "1 Heure de Team Games" ---
+                const nomAct = (act.label || "").toLowerCase();
+                if (nomAct.includes("1 heure de team game")) {
+                    eMs = sMs + (60 * 60000); // Forcer 1h
+                }
+                
                 if (eMs > maxEndMs) maxEndMs = eMs;
             });
             const latestDate = new Date(maxEndMs);
@@ -468,7 +475,16 @@ class AppStateManager {
             // 4. Activités détaillées (seulement les activités, pas les produits injectés)
             const activites = activitiesForSchedule.map(act => {
                 const s = new Date(act.start_at || act.created_at || Date.now());
-                const e = act.end_at ? new Date(act.end_at) : new Date(s.getTime() + (Number(act.duration) || 60) * 60000);
+                const sMs = s.getTime();
+                let eMs = act.end_at ? new Date(act.end_at).getTime() : sMs + (Number(act.duration) || 60) * 60000;
+                
+                // --- NOUVEAU: SURPASSER LA DUREE DE "1 Heure de Team Games" ---
+                const nomAct = (act.label || "").toLowerCase();
+                if (nomAct.includes("1 heure de team game")) {
+                    eMs = sMs + (60 * 60000); // Forcer 1h
+                }
+                
+                const e = new Date(eMs);
                 const actQty = Number(act.qty) || Number(act.raw_payload?.client?.qty) || Number(act.raw_payload?.qty) || nbPersonnes || 1;
                 return {
                     heureDebut: s.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
