@@ -474,6 +474,10 @@ class AppStateManager {
             const orderPacks = new Set();
             group.forEach(act => {
                 const rp = act.raw_payload || {};
+                const typeRaw = (rp.type || act.type || "").toUpperCase();
+                // Ignorer les produits injectés pour le calcul du nom du pack
+                if (typeRaw === "PRODUCT" || typeRaw === "OPTION" || typeRaw === "PACK") return;
+                
                 const itemLabel = rp.order_item?.label || rp.product?.label || rp.pack_label || rp.activity?.product_label || act.pack_label || act.product_label;
                 if (itemLabel && typeof itemLabel === 'string' && itemLabel.trim() && !itemLabel.toLowerCase().includes("accueil") && !itemLabel.toLowerCase().includes("table réservée")) {
                     orderPacks.add(itemLabel.trim());
@@ -559,6 +563,7 @@ class AppStateManager {
                     checkItems(act.raw_payload.products);
                 }
             });
+
             const options = Array.from(optionsMap.entries()).map(([label, qty]) => `${qty > 1 ? qty + ' x ' : ''}${label}`);
 
             // 8. Sous-compte enfant anniversaire (si réservation anniversaire)
@@ -642,17 +647,25 @@ class AppStateManager {
         return this.mergeDuplicateClientBookings(bookings);
     }
 
-    computePackLabelFromActivities(acts, fallbackPack = "") {
-        if (!acts || !acts.length) return fallbackPack || "Réservation Qweekle";
+    computePackLabelFromActivities(group, fallbackLabel) {
+        if (!group || group.length === 0) return fallbackLabel;
+        
+        // 1. Détection des packs standards basés sur les activités (ignorer les produits)
+        const mainActs = group.filter(a => {
+            const typeRaw = (a.raw_payload?.type || a.type || "").toUpperCase();
+            return typeRaw !== "PRODUCT" && typeRaw !== "OPTION" && typeRaw !== "PACK";
+        });
 
         // Filtrer les activités d'accueil ou de table
-        const mainActs = acts.filter(a => {
+        const filteredActs = mainActs.filter(a => {
             const l = (a.nom || a.label || "").toLowerCase();
             return !l.includes("accueil") && !l.includes("table réservée");
         });
+        
+        const actLabels = filteredActs.map(a => (a.label || a.nom || "").toLowerCase());
 
-        if (!mainActs.length) {
-            return fallbackPack || (acts[0].nom || acts[0].label || "Réservation Qweekle");
+        if (!filteredActs.length) {
+            return fallbackLabel || (group[0].nom || group[0].label || "Réservation Qweekle");
         }
 
         // Vérifier si toutes les activités principales sont du Laser Game
