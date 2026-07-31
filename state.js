@@ -1247,17 +1247,17 @@ class AppStateManager {
         const cats = [];
         
         // Enfant: 7-12 ans, enfant, junior
-        if (/\b(enfant|enfants|7-12|junior|juniors)\b/i.test(fullStr)) {
+        if (/\b(enfant|enfants|7\s*-\s*12|junior|juniors)\b/i.test(fullStr)) {
             cats.push("enfant");
         }
         
         // Ado: 13-18 ans, ado, ados, adolescent, teen (regex \b pour ne pas matcher "mikado")
-        if (/\b(ado|ados|adolescent|adolescents|13-18|teen|teens)\b/i.test(fullStr)) {
+        if (/\b(ado|ados|adolescent|adolescents|13\s*-\s*18|teen|teens)\b/i.test(fullStr)) {
             cats.push("ado");
         }
         
         // Adulte: +18 ans, 18+, adulte, adultes, senior
-        if (/\b(adulte|adultes|\+18|18\+|senior|seniors)\b/i.test(fullStr)) {
+        if (/\b(adulte|adultes|senior|seniors)\b/i.test(fullStr) || /(?:\+\s*18|18\s*\+)/.test(fullStr)) {
             cats.push("adulte");
         }
         
