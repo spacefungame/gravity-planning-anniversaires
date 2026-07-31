@@ -188,7 +188,7 @@ class AppStateManager {
 
                 if (response.ok) {
                     const json = await response.json();
-                    const rawBookings = json.data || [];
+                    const rawBookings = (json.data || []).filter(b => b.state !== 'unconfirmed' && b.state !== 'cancelled' && b.state !== 'deleted');
                     
                     // --- NOUVEAU : Récupérer les infos clients et les items supplémentaires ---
                     const orderIds = Array.from(new Set(rawBookings.map(b => b.order_item?.order_id || b.sale_id || b.order_id).filter(Boolean)));
@@ -517,17 +517,20 @@ class AppStateManager {
                     lblLower.includes("café") || lblLower.includes("cafe");
 
                 // Filtre anti-pack: ne pas afficher l'activité principale dans les options
-                const matchesNomPack = nomPack.toLowerCase().includes(lblLower) || lblLower.includes(nomPack.toLowerCase());
+                const matchesNomPack = nomPack && (nomPack.toLowerCase().includes(lblLower) || lblLower.includes(nomPack.toLowerCase()));
                 const isAlreadyActivity = activitiesForSchedule.some(mainAct => {
                     const mainLbl = (mainAct.label || mainAct.nom || "").toLowerCase();
+                    if (!mainLbl || !lblLower) return false;
                     return mainLbl === lblLower || (lblLower.includes("laser game") && mainLbl.includes("laser game")) || (lblLower.includes("quiz") && mainLbl.includes("quiz"));
                 });
 
-                if (!isRealActivity && !matchesNomPack && !isAlreadyActivity && (typeRaw === "PRODUCT" || typeRaw === "OPTION" || isOptionKeyword || (!act.start_at && act.label))) {
-                    if (lbl) {
-                        const existingQty = optionsMap.get(lbl) || 0;
-                        const itemQty = Number(act.qty) || 1;
-                        optionsMap.set(lbl, existingQty + itemQty);
+                if (!isRealActivity && !matchesNomPack && !isAlreadyActivity) {
+                    if (typeRaw === "PRODUCT" || typeRaw === "OPTION" || typeRaw === "PACK" || isOptionKeyword || !act.start_at) {
+                        if (lbl) {
+                            const existingQty = optionsMap.get(lbl) || 0;
+                            const itemQty = Number(act.qty) || 1;
+                            optionsMap.set(lbl, existingQty + itemQty);
+                        }
                     }
                 }
 
