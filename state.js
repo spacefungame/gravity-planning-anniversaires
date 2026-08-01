@@ -506,10 +506,12 @@ class AppStateManager {
                 const sMs = new Date(act.start_at || act.created_at || Date.now()).getTime();
                 let eMs = act.end_at ? new Date(act.end_at).getTime() : sMs + (Number(act.duration) || 60) * 60000;
                 
-                // --- NOUVEAU: SURPASSER LA DUREE DE "1 Heure de Team Games" ---
+                // --- NOUVEAU: SURPASSER LA DUREE DE "1 Heure de Team Games" ET "Table réservée" ---
                 const nomAct = (act.label || "").toLowerCase();
                 if (nomAct.includes("1 heure de team game")) {
                     eMs = sMs + (60 * 60000); // Forcer 1h
+                } else if (nomAct.includes("table") && (nomAct.includes("réservée") || nomAct.includes("reservee") || nomAct.includes("installée"))) {
+                    eMs = sMs + (40 * 60000); // Forcer 40 min
                 }
                 
                 if (eMs > maxEndMs) maxEndMs = eMs;
@@ -538,10 +540,12 @@ class AppStateManager {
                 const sMs = s.getTime();
                 let eMs = act.end_at ? new Date(act.end_at).getTime() : sMs + (Number(act.duration) || 60) * 60000;
                 
-                // --- NOUVEAU: SURPASSER LA DUREE DE "1 Heure de Team Games" ---
+                // --- NOUVEAU: SURPASSER LA DUREE DE "1 Heure de Team Games" ET "Table réservée" ---
                 const nomAct = (act.label || "").toLowerCase();
                 if (nomAct.includes("1 heure de team game")) {
                     eMs = sMs + (60 * 60000); // Forcer 1h
+                } else if (nomAct.includes("table") && (nomAct.includes("réservée") || nomAct.includes("reservee") || nomAct.includes("installée"))) {
+                    eMs = sMs + (40 * 60000); // Forcer 40 min
                 }
                 
                 const e = new Date(eMs);
