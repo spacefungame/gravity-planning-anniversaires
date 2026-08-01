@@ -651,8 +651,13 @@ class AppStateManager {
                 }
             });
 
-            const options = Array.from(optionsMap.entries()).map(([label, qty]) => `${qty > 1 ? qty + ' x ' : ''}${label}`);
-
+            const options = Array.from(optionsMap.entries()).map(([label, qty]) => {
+                let cleanLabel = label;
+                if (cleanLabel.toLowerCase().includes("brownie")) {
+                    cleanLabel = "Brownie";
+                }
+                return `${qty} x ${cleanLabel}`;
+            });
             // 8. Sous-compte enfant anniversaire (si réservation anniversaire)
             let enfantAnniversaire = null;
             if (categories.includes("anniversaire")) {
