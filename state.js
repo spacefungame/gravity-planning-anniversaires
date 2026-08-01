@@ -258,6 +258,38 @@ class AppStateManager {
                         console.warn("⚠️ Impossible de récupérer infos supplémentaires API :", e);
                     }
 
+                    // --- NOUVEAU : Récupérer les sous-comptes (enfants) depuis Supabase pour pallier aux manques de l'API REST Qweekle ---
+                    let supabaseSubclientsMap = {};
+                    if (CONFIG.SUPABASE_URL && CONFIG.SUPABASE_KEY) {
+                        try {
+                            const prevDate = new Date(dateStr);
+                            prevDate.setDate(prevDate.getDate() - 1);
+                            const prevDateStr = prevDate.toISOString().split("T")[0];
+                            const nextDate = new Date(dateStr);
+                            nextDate.setDate(nextDate.getDate() + 1);
+                            const nextDateStr = nextDate.toISOString().split("T")[0];
+                            const supaUrl = `${CONFIG.SUPABASE_URL}/rest/v1/booking_activities?select=order_id,raw_payload&start_at=gte.${prevDateStr}T12:00:00Z&start_at=lt.${nextDateStr}T23:59:59Z`;
+                            
+                            const responseSupa = await fetch(supaUrl, {
+                                method: "GET",
+                                headers: { "apikey": CONFIG.SUPABASE_KEY, "Authorization": `Bearer ${CONFIG.SUPABASE_KEY}` }
+                            });
+                            if (responseSupa.ok) {
+                                const supaData = await responseSupa.json();
+                                supaData.forEach(row => {
+                                    if (row.order_id && row.raw_payload) {
+                                        const subs = row.raw_payload.subclients || row.raw_payload.client?.sub_clients || [];
+                                        if (subs.length > 0) {
+                                            supabaseSubclientsMap[row.order_id] = subs;
+                                        }
+                                    }
+                                });
+                            }
+                        } catch(e) {
+                            console.warn("⚠️ Impossible de récupérer les sous-comptes Supabase :", e);
+                        }
+                    }
+
                     // Convertir au format unifié "Supabase" pour utiliser le parseur ultra-optimisé
                     const unifiedRows = rawBookings.map(b => {
                         const orderId = b.order_item?.order_id || b.sale_id || b.order_id || b.id;
@@ -274,7 +306,8 @@ class AppStateManager {
                                 firstname: clientData.firstname || b.client?.firstname || "Client",
                                 lastname: clientData.lastname || b.client?.lastname || "Qweekle",
                                 society: clientData.society || b.client?.society || "",
-                                type: clientData.type || "B2C"
+                                type: clientData.type || "B2C",
+                                sub_clients: supabaseSubclientsMap[orderId] || []
                             }
                         };
 
@@ -459,12 +492,10 @@ class AppStateManager {
                 const sMs = new Date(act.start_at || act.created_at || Date.now()).getTime();
                 let eMs = act.end_at ? new Date(act.end_at).getTime() : sMs + (Number(act.duration) || 60) * 60000;
                 
-                // --- NOUVEAU: SURPASSER LA DUREE DE "1 Heure de Team Games" ET "Table réservée" ---
+                // --- NOUVEAU: SURPASSER LA DUREE DE "1 Heure de Team Games" ---
                 const nomAct = (act.label || "").toLowerCase();
                 if (nomAct.includes("1 heure de team game")) {
                     eMs = sMs + (60 * 60000); // Forcer 1h
-                } else if (nomAct.includes("table réservée")) {
-                    eMs = sMs + (40 * 60000); // Forcer 40m
                 }
                 
                 if (eMs > maxEndMs) maxEndMs = eMs;
@@ -493,12 +524,10 @@ class AppStateManager {
                 const sMs = s.getTime();
                 let eMs = act.end_at ? new Date(act.end_at).getTime() : sMs + (Number(act.duration) || 60) * 60000;
                 
-                // --- NOUVEAU: SURPASSER LA DUREE DE "1 Heure de Team Games" ET "Table réservée" ---
+                // --- NOUVEAU: SURPASSER LA DUREE DE "1 Heure de Team Games" ---
                 const nomAct = (act.label || "").toLowerCase();
                 if (nomAct.includes("1 heure de team game")) {
                     eMs = sMs + (60 * 60000); // Forcer 1h
-                } else if (nomAct.includes("table réservée")) {
-                    eMs = sMs + (40 * 60000); // Forcer 40m
                 }
                 
                 const e = new Date(eMs);
@@ -522,7 +551,7 @@ class AppStateManager {
                 // Si c'est un produit injecté qui représente le pack principal
                 if (typeRaw === "PACK" && !act.start_at) {
                     const lbl = (rp.label || act.label || act.nom || "").trim();
-                    if (lbl && !lbl.toLowerCase().includes("boisson") && !lbl.toLowerCase().includes("pizza") && !lbl.toLowerCase().includes("gâteau") && !lbl.toLowerCase().includes("gateau")) {
+                    if (lbl && !lbl.toLowerCase().includes("boisson") && !lbl.toLowerCase().includes("pizza") && !lbl.toLowerCase().includes("gâteau") && !lbl.toLowerCase().includes("gateau") && !lbl.toLowerCase().includes("brownie")) {
                         orderPacks.add(lbl);
                     }
                     return;
