@@ -243,7 +243,12 @@ class AppStateManager {
                                         client_id: orderData.client_id,
                                         activity: { label: lbl },
                                         qty: item.qty,
-                                        type: "PRODUCT"
+                                        type: item.type || "PRODUCT",
+                                        raw_payload: {
+                                            type: item.type || "PRODUCT",
+                                            label: lbl,
+                                            order_item: { order_id: orderData.id }
+                                        }
                                     });
                                 });
                             }
@@ -384,15 +389,20 @@ class AppStateManager {
                 const rowDate = new Date(r.start_at).toLocaleDateString("en-CA", { timeZone: "Europe/Brussels" });
                 if (rowDate === dateStr) return true;
             }
-            if (r.order_id && validOrderIds.has(r.order_id)) return true;
+            const oid = r.order_id || r.order_item?.order_id || r.order_item?.order?.id;
+            if (oid && validOrderIds.has(oid)) return true;
             if (r.qweekle_booking_id && validOrderIds.has(r.qweekle_booking_id)) return true;
+            
+            // Cas particulier pour les lignes injectées depuis l'API qui n'ont pas forcément de validOrderIds mais un order_id explicite
+            if (r.type === "PRODUCT" || r.type === "OPTION" || r.type === "PACK" || r.type === "DEPOSIT") return true;
+
             return false;
         });
 
         // Regrouper par order_id ou par identifiant unique de réservation
         const groups = {};
         filteredRows.forEach(r => {
-            const oid = r.order_id || r.qweekle_booking_id || r.id;
+            const oid = r.order_id || r.order_item?.order_id || r.order_item?.order?.id || r.qweekle_booking_id || r.id;
             if (!groups[oid]) groups[oid] = [];
             groups[oid].push(r);
         });
@@ -438,7 +448,7 @@ class AppStateManager {
             // 1.5 Séparer les activités principales des options pures
             const mainActivities = group.filter(a => {
                 const typeRaw = (a.raw_payload?.type || a.type || "").toUpperCase();
-                return typeRaw !== "PRODUCT" && typeRaw !== "OPTION";
+                return typeRaw !== "PRODUCT" && typeRaw !== "OPTION" && typeRaw !== "PACK" && typeRaw !== "DEPOSIT" && typeRaw !== "PAID_DEPOSIT" && typeRaw !== "FEE";
             });
             const activitiesForSchedule = mainActivities.length > 0 ? mainActivities : group;
 
@@ -504,8 +514,18 @@ class AppStateManager {
             group.forEach(act => {
                 const rp = act.raw_payload || {};
                 const typeRaw = (rp.type || act.type || "").toUpperCase();
-                // Ignorer les produits injectés pour le calcul du nom du pack (produits et options)
-                if (typeRaw === "PRODUCT" || typeRaw === "OPTION") return;
+                
+                // Si c'est un produit injecté qui représente le pack principal
+                if (typeRaw === "PACK" && !act.start_at) {
+                    const lbl = (rp.label || act.label || act.nom || "").trim();
+                    if (lbl && !lbl.toLowerCase().includes("boisson") && !lbl.toLowerCase().includes("pizza") && !lbl.toLowerCase().includes("gâteau") && !lbl.toLowerCase().includes("gateau")) {
+                        orderPacks.add(lbl);
+                    }
+                    return;
+                }
+
+                // Ignorer les autres produits injectés pour le calcul du nom du pack
+                if (typeRaw === "PRODUCT" || typeRaw === "OPTION" || typeRaw === "DEPOSIT") return;
                 
                 const itemLabel = rp.order_item?.label || rp.product?.label || rp.pack_label || rp.activity?.product_label || act.pack_label || act.product_label;
                 if (itemLabel && typeof itemLabel === 'string' && itemLabel.trim() && !itemLabel.toLowerCase().includes("accueil") && !itemLabel.toLowerCase().includes("table réservée")) {
@@ -515,7 +535,7 @@ class AppStateManager {
             let originalPackStr = "";
             if (orderPacks.size > 0) {
                 originalPackStr = Array.from(orderPacks).join(" + ");
-                const distinctActTypes = new Set(group.map(a => (a.label || a.nom || "").replace(/▶\s*/g, '').trim()).filter(n => !n.toLowerCase().includes("accueil") && !n.toLowerCase().includes("table réservée")));
+                const distinctActTypes = new Set(activitiesForSchedule.map(a => (a.label || a.nom || "").replace(/▶\s*/g, '').trim()).filter(n => !n.toLowerCase().includes("accueil") && !n.toLowerCase().includes("table réservée")));
                 
                 if (distinctActTypes.size > orderPacks.size && orderPacks.size === 1) {
                     nomPack = this.computePackLabelFromActivities(group, originalPackStr);
@@ -721,10 +741,10 @@ class AppStateManager {
             });
 
             if (totalMin > 0) {
-                const firstLabel = mainActs[0].nom || mainActs[0].label || fallbackPack || "";
-                if (firstLabel.toLowerCase().includes("7-12") || firstLabel.toLowerCase().includes("enfant") || (fallbackPack || "").toLowerCase().includes("enfant")) {
+                const firstLabel = mainActs[0].nom || mainActs[0].label || fallbackLabel || "";
+                if (firstLabel.toLowerCase().includes("7-12") || firstLabel.toLowerCase().includes("enfant") || (fallbackLabel || "").toLowerCase().includes("enfant")) {
                     return `${totalMin} Min Laser Games | Enfant 7-12ans`;
-                } else if (firstLabel.toLowerCase().includes("adulte") || firstLabel.toLowerCase().includes("+18") || (fallbackPack || "").toLowerCase().includes("adulte")) {
+                } else if (firstLabel.toLowerCase().includes("adulte") || firstLabel.toLowerCase().includes("+18") || (fallbackLabel || "").toLowerCase().includes("adulte")) {
                     return `${totalMin} Min Laser Games | Adulte +18ans`;
                 } else {
                     return `${totalMin} Min Laser Games`;
@@ -735,7 +755,7 @@ class AppStateManager {
         // Si ce n'est pas uniquement du Laser Game (ex: 1 Heure de Team Games + 20 Min Laser Game 7-12 ans)
         // Récupérer les noms distincts
         const distinctNames = [];
-        mainActs.forEach(a => {
+        filteredActs.forEach(a => {
             let n = (a.nom || a.label || "").replace(/▶\s*/g, '').trim();
             if (n && !distinctNames.includes(n)) {
                 distinctNames.push(n);
@@ -746,7 +766,7 @@ class AppStateManager {
             return distinctNames.join(" + ");
         }
 
-        return fallbackPack || "Réservation Qweekle";
+        return fallbackLabel || "Réservation Qweekle";
     }
 
     splitBookingsBySessions(list) {
@@ -789,11 +809,7 @@ class AppStateManager {
             sessions.push(currentSession);
 
             if (sessions.length === 1) {
-                const newPack = this.computePackLabelFromActivities(booking.activites, booking.nomPack);
-                splitList.push({
-                    ...booking,
-                    nomPack: newPack || booking.nomPack
-                });
+                splitList.push(booking);
             } else {
                 // Plusieurs sessions distinctes sur la journée sous le même nom
                 sessions.forEach((sessActs, idx) => {
@@ -813,7 +829,7 @@ class AppStateManager {
                     }
                     const maxActPers = Math.max(...sessActs.map(a => Number(a.nbPersonnes) || Number(a.qty) || 0), 1);
                     const sessNbPers = Math.max(totalArrivees, maxActPers);
-                    const sessionPack = this.computePackLabelFromActivities(sessActs, booking.nomPack);
+                    const sessionPack = booking.nomPack || this.computePackLabelFromActivities(sessActs, booking.nomPack);
 
                     splitList.push({
                         ...booking,
@@ -822,7 +838,8 @@ class AppStateManager {
                         heureDepart: hDep,
                         nbPersonnes: sessNbPers,
                         nomPack: sessionPack || `${booking.nomPack} (Session ${idx + 1})`,
-                        activites: sessActs
+                        activites: sessActs,
+                        isSplit: true
                     });
                 });
             }
