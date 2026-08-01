@@ -172,6 +172,20 @@ class AppStateManager {
         return [];
     }
 
+    isOptionLabel(text) {
+        if (!text) return false;
+        const lower = text.toLowerCase();
+        return lower.includes("option") || lower.includes("produit") || lower.includes("bar") ||
+            lower.includes("gâteau") || lower.includes("gateau") || lower.includes("kidibul") || 
+            lower.includes("brownie") || lower.includes("donut") || lower.includes("bonbon") || 
+            lower.includes("chips") || lower.includes("granit") || lower.includes("crêpe") || 
+            lower.includes("crepe") || lower.includes("formule") || lower.includes("goûter") || 
+            lower.includes("gouter") || lower.includes("boisson") || lower.includes("bière") || 
+            lower.includes("biere") || lower.includes("soda") || lower.includes("jeton") || 
+            lower.includes("gobelet") || lower.includes("pitch") || lower.includes("capri") || 
+            lower.includes("café") || lower.includes("cafe") || lower.includes("nourriture");
+    }
+
     async fetchAndSyncQweekleReservations(dateStr) {
         if (typeof CONFIG === "undefined") {
             return { status: "fallback", data: this.getQweekleReservationsForDate(dateStr) };
@@ -551,7 +565,7 @@ class AppStateManager {
                 // Si c'est un produit injecté qui représente le pack principal
                 if (typeRaw === "PACK" && !act.start_at) {
                     const lbl = (rp.label || act.label || act.nom || "").trim();
-                    if (lbl && !lbl.toLowerCase().includes("boisson") && !lbl.toLowerCase().includes("pizza") && !lbl.toLowerCase().includes("gâteau") && !lbl.toLowerCase().includes("gateau") && !lbl.toLowerCase().includes("brownie")) {
+                    if (lbl && !this.isOptionLabel(lbl)) {
                         orderPacks.add(lbl);
                     }
                     return;
@@ -593,17 +607,9 @@ class AppStateManager {
                 const typeRaw = (act.raw_payload?.type || act.type || "").toUpperCase();
 
                 // On ne met jamais en option une activité qui est déjà prévue à une heure précise (ex: table réservée)
-                const isRealActivity = act.start_at && !lblLower.includes("gâteau") && !lblLower.includes("gateau");
+                const isRealActivity = act.start_at && !this.isOptionLabel(lblLower);
 
-                const isOptionKeyword = catLower.includes("option") || catLower.includes("produit") || catLower.includes("bar") ||
-                    lblLower.includes("gâteau") || lblLower.includes("gateau") || lblLower.includes("kidibul") || 
-                    lblLower.includes("brownie") || lblLower.includes("donut") || lblLower.includes("bonbon") || 
-                    lblLower.includes("chips") || lblLower.includes("granit") || lblLower.includes("crêpe") || 
-                    lblLower.includes("crepe") || lblLower.includes("formule") || lblLower.includes("goûter") || 
-                    lblLower.includes("gouter") || lblLower.includes("boisson") || lblLower.includes("bière") || 
-                    lblLower.includes("biere") || lblLower.includes("soda") || lblLower.includes("jeton") || 
-                    lblLower.includes("gobelet") || lblLower.includes("pitch") || lblLower.includes("capri") || 
-                    lblLower.includes("café") || lblLower.includes("cafe");
+                const isOptionKeyword = this.isOptionLabel(catLower) || this.isOptionLabel(lblLower);
 
                 // Filtre anti-pack: ne pas afficher l'activité principale dans les options
                 const matchesNomPack = (nomPack && (nomPack.toLowerCase().includes(lblLower) || lblLower.includes(nomPack.toLowerCase()))) ||
@@ -655,6 +661,15 @@ class AppStateManager {
                 let cleanLabel = label;
                 if (cleanLabel.toLowerCase().includes("brownie")) {
                     cleanLabel = "Brownie";
+                }
+                if (cleanLabel.toLowerCase().includes("crêpe")) {
+                    cleanLabel = "Crêpe(s)";
+                }
+                if (cleanLabel.toLowerCase().includes("bonbon")) {
+                    cleanLabel = "Bonbons";
+                }
+                if (cleanLabel.toLowerCase().includes("nourriture externe")) {
+                    cleanLabel = "Frais Nourriture Externe";
                 }
                 return `${qty} x ${cleanLabel}`;
             });
