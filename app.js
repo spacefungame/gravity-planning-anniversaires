@@ -1179,6 +1179,32 @@ function openEmailAlertsModal(bookingId) {
   if (!booking) return;
 
   const alerts = appState.getEmailAlerts(booking);
+  
+  let modal = document.getElementById("email-alerts-modal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "email-alerts-modal";
+    modal.className = "modal-overlay";
+    modal.innerHTML = `
+        <div class="modal-box" style="max-width: 650px; width: 95%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 15px;">
+                <h3 style="color: #dc2626; display: flex; align-items: center; gap: 8px; margin: 0; font-size: 1.25rem;">
+                    <span>📩</span> Modifications demandées par email
+                </h3>
+                <button type="button" onclick="closeModal('email-alerts-modal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #a0aec0;">×</button>
+            </div>
+            
+            <div id="email-alerts-content" style="display: flex; flex-direction: column; gap: 15px; max-height: 60vh; overflow-y: auto; padding-right: 5px;">
+            </div>
+            
+            <div class="modal-actions" style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn-secondary" onclick="closeModal('email-alerts-modal')">Fermer</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
   const container = document.getElementById("email-alerts-content");
   if (!container) return;
 
