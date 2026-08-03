@@ -105,17 +105,23 @@ function initAuth() {
   const logoutBtn = document.getElementById("btn-logout");
 
   loginForm.addEventListener("submit", async (e) => {
+    console.log('Login form submitted, pwd:', passwordInput.value);
     e.preventDefault();
     const pwd = passwordInput.value.trim();
     if (!pwd) return;
 
     // Vérification directe avec RAW_PASSWORD (1503) ou vérification SHA-256
-    if (pwd === CONFIG.RAW_PASSWORD) {
-      loginError.textContent = "";
-      passwordInput.value = "";
-      appState.setAuthenticated(true);
-      return;
-    }
+      if (pwd === CONFIG.RAW_PASSWORD) {
+        console.log('Login successful (raw password)');
+        loginError.textContent = "";
+        passwordInput.value = "";
+        appState.setAuthenticated(true);
+        // Ensure UI updates even if auth listener not yet registered
+        document.getElementById("login-modal").style.display = "none";
+        document.getElementById("app-header").style.display = "flex";
+        document.getElementById("app-content").style.display = "block";
+        return;
+      }
 
     // Calcul du hash SHA-256 si la vérification directe échoue
     try {
