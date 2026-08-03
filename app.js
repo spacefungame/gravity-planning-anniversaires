@@ -212,7 +212,7 @@ function renderCurrentView() {
       renderTeamPlanning();
       break;
     case "quiz":
-      renderClassicPlanning("quiz", "tbody-quiz", "subtitle-quiz");
+      renderQuizPlanning();
       break;
     case "postit":
       renderPostIts();
@@ -927,6 +927,154 @@ function renderTeamPlanning() {
       
       // Totaux
       const warningTotal = total > 50 ? "background-color: #F56565; color: white; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;" : "";
+      const warningDispo = dispo < 0 ? "background-color: #F56565; color: white; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;" : "";
+      trHtml += `<td style="text-align: center; font-weight: bold; border: 1px solid #000; padding: 1px 2px; font-size: 0.85rem; ${warningTotal}">${total}</td>`;
+      trHtml += `<td style="text-align: center; font-weight: bold; border: 1px solid #000; padding: 1px 2px; font-size: 0.85rem; ${warningDispo}">${dispo}</td>`;
+      
+      tr.innerHTML = trHtml;
+      tbody.appendChild(tr);
+  });
+}
+
+// ============================================================================
+// 5quater. RENDU DU PLANNING QUIZ GAME (TABLEAU A4)
+// ============================================================================
+function renderQuizPlanning() {
+  const tbody = document.getElementById("tbody-quiz-a4");
+  const thead = document.getElementById("thead-quiz-a4");
+  const dateTitle = document.getElementById("quiz-a4-date-title");
+  if (!tbody || !thead) return;
+
+  // 1. Date title
+  const parts = appState.currentDate.split("-");
+  const d = new Date(parts[0], parts[1] - 1, parts[2]);
+  if (dateTitle) {
+    dateTitle.textContent = `${DAYS_FR[d.getDay()]} ${d.getDate()} ${MONTHS_FR[d.getMonth()]} ${parts[0]}`;
+  }
+
+  // 2. Récupérer les événements
+  const manualEvents = appState.getEventsForDate(appState.currentDate, "quiz");
+  const allQweekle = appState.getQweekleReservationsForDate(appState.currentDate);
+  const qweekleQuiz = allQweekle.filter(r => {
+      const actType = (r.typeActivite || "").toLowerCase();
+      const pack = (r.pack || "").toLowerCase();
+      return actType.includes("quiz") || pack.includes("quiz") || 
+             (r.activites && r.activites.some(a => (a.nom || "").toLowerCase().includes("quiz")));
+  });
+
+  // 3. Normalisation des données
+  const timeGroups = {};
+  
+  // Générer les tranches horaires
+  for (let h = CONFIG.HOURS_START; h <= CONFIG.HOURS_END; h++) {
+    const hourStr = String(h).padStart(2, '0');
+    timeGroups[`${hourStr}:00`] = [];
+    timeGroups[`${hourStr}:20`] = [];
+    timeGroups[`${hourStr}:40`] = [];
+  }
+
+  const addOrUpdateGroup = (time, nom, nb, isAnniv) => {
+    if (!time) return;
+    if (!timeGroups[time]) timeGroups[time] = [];
+    let group = timeGroups[time].find(g => g.nom === nom);
+    if (group) {
+        group.nb += nb;
+        if (isAnniv) group.isAnniv = true;
+    } else {
+        timeGroups[time].push({ nom, nb, isAnniv });
+    }
+  };
+
+  // Traiter les événements manuels
+  manualEvents.forEach(ev => {
+      const time = ev.startHour;
+      let nb = 0; 
+      const match = ev.title.match(/(\d+)/);
+      if (match) nb = parseInt(match[1], 10);
+
+      const isAnniv = (ev.title || "").toLowerCase().includes("anniv");
+      addOrUpdateGroup(time, ev.title, nb, isAnniv);
+  });
+
+  // Traiter Qweekle
+  qweekleQuiz.forEach(r => {
+      let isAnniv = false;
+      let suffix = "";
+      if (r.categories && r.categories.includes("anniversaire")) isAnniv = true;
+      if (r.enfantAnniversaire && r.enfantAnniversaire.prenom) {
+          isAnniv = true;
+          suffix = ` (${r.enfantAnniversaire.prenom})`;
+      }
+      
+      let tags = [];
+      if (r.categories) {
+          if (r.categories.includes("enfant")) tags.push("Enf");
+          if (r.categories.includes("ado")) tags.push("Ado");
+          if (r.categories.includes("adulte") || r.categories.includes("évènement adulte")) tags.push("Adulte");
+          if (r.categories.includes("team building")) tags.push("TB");
+          if (r.categories.includes("asbl")) tags.push("ASBL");
+      }
+      const tagStr = tags.length > 0 ? ` <span style="font-size:0.65rem; font-weight:normal; color:#4a5568;">[${tags.join(',')}]</span>` : "";
+      
+      const nomComplet = `${r.nom} ${r.prenom || ""}${suffix}${tagStr}`.trim();
+      
+      // Trouver les activités Quiz Game
+      const quizActs = (r.activites || []).filter(a => (a.nom || "").toLowerCase().includes("quiz"));
+      
+      if (quizActs.length > 0) {
+          quizActs.forEach(act => {
+              const time = act.heureDebut;
+              const nb = act.nbPersonnes || r.nbPersonnes || 1;
+              addOrUpdateGroup(time, nomComplet, nb, isAnniv);
+          });
+      } else {
+          const time = r.heureArrivee;
+          const nb = r.nbPersonnes || 1;
+          addOrUpdateGroup(time, nomComplet, nb, isAnniv);
+      }
+  });
+
+  // 4. Nombre max de colonnes est forcé à 1
+  const maxCols = 1;
+
+  // 5. Génération thead
+  let theadHtml = `<tr><th style="width: 5%; text-align: center; border: 1px solid #000; padding: 1px 2px; font-size: 0.8rem;">Heure</th>`;
+  for (let i = 1; i <= maxCols; i++) {
+      theadHtml += `<th style="border: 1px solid #000; padding: 1px 2px; font-size: 0.8rem;">Nom</th><th style="width: 4%; text-align: center; border: 1px solid #000; font-size: 0.7rem; padding: 1px 2px;" title="Nombre">Nbre</th>`;
+  }
+  theadHtml += `<th style="width: 5%; text-align: center; border: 1px solid #000; padding: 1px 2px; font-size: 0.8rem;">Total</th><th style="width: 7%; text-align: center; border: 1px solid #000; font-size: 0.7rem; padding: 1px 2px;">places dispos</th></tr>`;
+  thead.innerHTML = theadHtml;
+
+  // 6. Génération tbody (trier par heure)
+  tbody.innerHTML = "";
+  const sortedTimes = Object.keys(timeGroups).sort();
+  
+  sortedTimes.forEach(time => {
+      const groups = timeGroups[time];
+      
+      let total = 0;
+      groups.forEach(g => total += g.nb);
+      const dispo = 12 - total; // Jauge max = 12
+      
+      const tr = document.createElement("tr");
+      
+      // Heure
+      let trHtml = `<td style="font-weight: bold; text-align: center; border: 1px solid #000; padding: 1px 2px; font-size: 0.8rem;">${time}</td>`;
+      
+      // Groupes (maxCols = 1)
+      for (let i = 0; i < maxCols; i++) {
+          if (i < groups.length) {
+              const g = groups[i];
+              const bg = g.isAnniv ? "background-color: #FFFF00; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;" : "";
+              trHtml += `<td style="${bg} border-left: 1px solid #000; border-bottom: 1px solid #000; padding: 1px 4px; font-size: 0.8rem;">${g.nom}</td>`;
+              trHtml += `<td style="${bg} text-align: center; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 1px 2px; font-size: 0.85rem;">${g.nb > 0 ? g.nb : ''}</td>`;
+          } else {
+              trHtml += `<td style="border-left: 1px solid #000; border-bottom: 1px solid #000; padding: 1px;"></td><td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 1px;"></td>`;
+          }
+      }
+      
+      // Totaux
+      const warningTotal = total > 12 ? "background-color: #F56565; color: white; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;" : "";
       const warningDispo = dispo < 0 ? "background-color: #F56565; color: white; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;" : "";
       trHtml += `<td style="text-align: center; font-weight: bold; border: 1px solid #000; padding: 1px 2px; font-size: 0.85rem; ${warningTotal}">${total}</td>`;
       trHtml += `<td style="text-align: center; font-weight: bold; border: 1px solid #000; padding: 1px 2px; font-size: 0.85rem; ${warningDispo}">${dispo}</td>`;
