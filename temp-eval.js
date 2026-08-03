@@ -1,3 +1,4 @@
+const window = {};
 /**
  * Module d'attribution automatique des tables
  * Se base sur CONFIG.TABLES
@@ -125,15 +126,8 @@ class TableAssigner {
             if (res.manualTable) {
                 const fullStart = this._timeToMinutes(res.heureArrivee);
                 const fullEnd = this._timeToMinutes(res.heureDepart);
-                
-                // Extraire les tables valides du texte saisi
-                const tables = [];
-                const upperManual = res.manualTable.toUpperCase();
-                this.tables.forEach(t => {
-                    if (upperManual.includes(t.id.toUpperCase())) {
-                        tables.push(t.id);
-                    }
-                });
+                // On peut avoir plusieurs tables séparées par un "+"
+                const tables = res.manualTable.split("+").map(t => t.trim()).filter(t => t);
                 
                 if (tables.length > 0) {
                     timeline.push({
@@ -280,3 +274,5 @@ class TableAssigner {
 
 // Export pour le navigateur
 window.TableAssigner = TableAssigner;
+
+module.exports = TableAssigner;
