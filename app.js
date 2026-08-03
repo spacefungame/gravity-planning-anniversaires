@@ -1174,9 +1174,12 @@ function closeModal(modalId) {
 }
 
 function openEmailAlertsModal(bookingId) {
-  const bookingsMap = appState.getBookingsMap();
-  const booking = bookingsMap[bookingId];
-  if (!booking) return;
+  const reservations = appState.getQweekleReservationsForDate(appState.currentDate);
+  const booking = Object.values(reservations).find(b => b.id === bookingId);
+  if (!booking) {
+    console.error("Booking not found for ID:", bookingId);
+    return;
+  }
 
   const alerts = appState.getEmailAlerts(booking);
   
