@@ -1281,9 +1281,14 @@ class AppStateManager {
         const isNewAccueil =
           (curr.nom || "").toLowerCase().includes("accueil") && gap >= 30;
 
-        // Si l'écart entre la fin de l'activité précédente et le début de la nouvelle est >= 90 min,
-        // OU si une nouvelle activité "Accueil" démarre avec au moins 30 min d'écart, c'est un nouveau groupe / nouvelle arrivée !
-        if (gap >= 90 || isNewAccueil) {
+        const isCurrentSessionOnlyAccueil = currentSession.every((a) =>
+          (a.nom || "").toLowerCase().includes("accueil"),
+        );
+
+        // Si l'écart entre la fin de l'activité précédente et le début de la nouvelle est >= 90 min, on scinde.
+        // CEPENDANT, on ne scinde pas si la session actuelle n'est composée QUE d'un accueil (il doit être relié aux activités suivantes).
+        // Si la nouvelle activité est AUSSI un accueil (isNewAccueil), on scinde quand même car c'est un groupe différent.
+        if ((gap >= 90 && !isCurrentSessionOnlyAccueil) || isNewAccueil) {
           sessions.push(currentSession);
           currentSession = [curr];
         } else {
