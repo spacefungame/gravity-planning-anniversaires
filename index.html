@@ -494,10 +494,30 @@
         </div>
     </div>
 
+    <!-- 7. FENÊTRE MODALE : ALERTES EMAIL -->
+    <div id="email-alerts-modal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 650px; width: 95%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 15px;">
+                <h3 style="color: #dc2626; display: flex; align-items: center; gap: 8px; margin: 0; font-size: 1.25rem;">
+                    <span>📩</span> Modifications demandées par email
+                </h3>
+                <button type="button" onclick="closeModal('email-alerts-modal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #a0aec0;">×</button>
+            </div>
+            
+            <div id="email-alerts-content" style="display: flex; flex-direction: column; gap: 15px; max-height: 60vh; overflow-y: auto; padding-right: 5px;">
+                <!-- Les alertes seront injectées ici -->
+            </div>
+            
+            <div class="modal-actions" style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn-secondary" onclick="closeModal('email-alerts-modal')">Fermer</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="config.js?v=11"></script>
-    <script src="state.js?v=11"></script>
-    <script src="app.js?v=11"></script>
+    <script src="config.js?v=12"></script>
+    <script src="state.js?v=12"></script>
+    <script src="app.js?v=12"></script>
 </body>
 </html>

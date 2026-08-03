@@ -480,6 +480,29 @@ class AppStateManager {
     return allAlerts;
   }
 
+  async markEmailAlertAsRead(alertId) {
+    if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_KEY) return false;
+    try {
+      const response = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/email_alerts?id=eq.${alertId}`, {
+        method: "PATCH",
+        headers: {
+          apikey: CONFIG.SUPABASE_KEY,
+          Authorization: `Bearer ${CONFIG.SUPABASE_KEY}`,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal"
+        },
+        body: JSON.stringify({ status: "read" })
+      });
+      if (response.ok) {
+        await this.syncEmailAlertsFromSupabase();
+        return true;
+      }
+    } catch (e) {
+      console.error("Erreur markEmailAlertAsRead:", e);
+    }
+    return false;
+  }
+
   // =========================================================================
   // GESTION ET SYNCHRONISATION DE L'API QWEEKLE
   // =========================================================================

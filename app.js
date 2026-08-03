@@ -785,7 +785,7 @@ function renderPlanningComplet(filterCategory = currentQweekleCategoryFilter) {
     // Génération des badges de catégories mis en évidence
     let badgesHtml = "";
     if (hasAlerts) {
-      badgesHtml += `<span class="qweekle-badge email-alert-badge" style="background: #ef4444; color: white; font-weight: bold; border-color: #dc2626; animation: pulse 2s infinite;" title="Une modification a été demandée par email !">📩 Alerte Email</span>`;
+      badgesHtml += `<span class="qweekle-badge email-alert-badge" style="background: #ef4444; color: white; font-weight: bold; border-color: #dc2626; animation: pulse 2s infinite; cursor: pointer;" title="Une modification a été demandée par email ! Cliquez pour lire." onclick="openEmailAlertsModal('${res.id}')">📩 Alerte Email</span>`;
     }
 
     if (res.categories && res.categories.length > 0) {
@@ -1173,10 +1173,74 @@ function closeModal(modalId) {
   if (el) el.style.display = "none";
 }
 
+function openEmailAlertsModal(bookingId) {
+  const bookingsMap = appState.getBookingsMap();
+  const booking = bookingsMap[bookingId];
+  if (!booking) return;
+
+  const alerts = appState.getEmailAlerts(booking);
+  const container = document.getElementById("email-alerts-content");
+  if (!container) return;
+
+  if (alerts.length === 0) {
+    container.innerHTML = `<p style="color: #4a5568; text-align: center; margin-top: 20px;">Aucune alerte non lue pour cette réservation.</p>`;
+  } else {
+    container.innerHTML = alerts.map(alert => {
+      const dateStr = new Date(alert.received_at).toLocaleString('fr-FR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+      return `
+        <div class="email-alert-card" style="background: #fff; border: 1px solid #e2e8f0; border-left: 4px solid #ef4444; border-radius: 6px; padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <strong style="color: #2d3748; font-size: 0.95rem;">${alert.email_subject || 'Email Qweekle'}</strong>
+            <span style="color: #718096; font-size: 0.8rem;">${dateStr}</span>
+          </div>
+          <div style="background: #f7fafc; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 0.9rem; color: #e53e3e; white-space: pre-wrap; margin-bottom: 12px; border: 1px dashed #feb2b2;">${alert.detected_changes}</div>
+          <div style="text-align: right;">
+            <button type="button" onclick="markEmailAlertAsRead('${alert.id}')" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.85rem; transition: background 0.2s;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
+              ✓ Marquer comme traité
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  document.getElementById("email-alerts-modal").style.display = "flex";
+}
+
+window.markEmailAlertAsRead = async function(alertId) {
+  const btn = event.target;
+  const originalText = btn.innerHTML;
+  btn.innerHTML = "Traitement...";
+  btn.disabled = true;
+
+  const success = await appState.markEmailAlertAsRead(alertId);
+  if (success) {
+    btn.innerHTML = "Traité !";
+    btn.style.background = "#48bb78";
+    
+    // Fermer après un court délai ou recharger l'interface
+    setTimeout(() => {
+      closeModal("email-alerts-modal");
+      renderPlanningComplet();
+    }, 800);
+  } else {
+    btn.innerHTML = "Erreur";
+    btn.style.background = "#e53e3e";
+    setTimeout(() => {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }, 2000);
+  }
+};
+
 // Global functions accessible from HTML onClick attributes
 window.openEventModal = openEventModal;
 window.openPostItModal = openPostItModal;
 window.closeModal = closeModal;
+window.openEmailAlertsModal = openEmailAlertsModal;
 window.switchTab = switchTab;
 
 window.deleteEventItem = function (eventId) {
