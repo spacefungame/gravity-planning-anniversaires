@@ -53,6 +53,9 @@ document.addEventListener("DOMContentLoaded", () => {
     renderCurrentView();
   });
 
+  // Timer d'actualisation automatique
+  let autoRefreshInterval = null;
+
   appState.onAuthChange((isAuth) => {
     if (isAuth) {
       document.getElementById("login-modal").style.display = "none";
@@ -61,10 +64,26 @@ document.addEventListener("DOMContentLoaded", () => {
       updateHeaderDateDisplay(appState.currentDate);
       renderCalendar();
       renderCurrentView();
+
+      // Démarrer l'actualisation automatique toutes les 10 minutes
+      if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+      autoRefreshInterval = setInterval(() => {
+        // Force un rafraîchissement depuis le réseau
+        appState.fetchAndSyncQweekleReservations(true).then(() => {
+          if (currentActiveTab === "planning") {
+            renderPlanningComplet();
+          }
+        });
+      }, 10 * 60 * 1000); // 10 minutes
     } else {
       document.getElementById("login-modal").style.display = "flex";
       document.getElementById("app-header").style.display = "none";
       document.getElementById("app-content").style.display = "none";
+      
+      if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+      }
     }
   });
 
