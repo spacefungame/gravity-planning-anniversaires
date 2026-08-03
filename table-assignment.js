@@ -137,6 +137,8 @@ class TableAssigner {
             const nbP = Number(res.nbPersonnes) || 0;
             if (nbP === 0) return;
 
+            const isAdult = res.categories && (res.categories.includes("évènement adulte") || res.categories.includes("team building") || res.categories.includes("adulte"));
+
             const fullStart = this._timeToMinutes(res.heureArrivee);
             const fullEnd = this._timeToMinutes(res.heureDepart);
             
@@ -144,21 +146,21 @@ class TableAssigner {
             let tableEnd = fullEnd;
             let reducedTime = false;
 
-            let bestCombo = this._findBestCombination(nbP, fullStart, fullEnd, timeline);
+            let bestCombo = this._findBestCombination(nbP, fullStart, fullEnd, timeline, isAdult);
 
             if (!bestCombo && res.activites) {
                 const tableAct = res.activites.find(a => 
                     a.nom.toLowerCase().includes("table réservée") || 
                     a.nom.toLowerCase().includes("table reservee")
                 );
-                if (tableAct && tableAct.heureDebut && tableAct.heureFin) {
-                    const shortStart = this._timeToMinutes(tableAct.heureDebut);
-                    const shortEnd = this._timeToMinutes(tableAct.heureFin);
+                if (tableAct) {
+                    const reducedStart = this._timeToMinutes(tableAct.heureDebut);
+                    const reducedEnd = this._timeToMinutes(tableAct.heureFin);
                     
-                    bestCombo = this._findBestCombination(nbP, shortStart, shortEnd, timeline);
+                    bestCombo = this._findBestCombination(nbP, reducedStart, reducedEnd, timeline, isAdult);
                     if (bestCombo) {
-                        tableStart = shortStart;
-                        tableEnd = shortEnd;
+                        tableStart = reducedStart;
+                        tableEnd = reducedEnd;
                         reducedTime = true;
                     }
                 }
@@ -186,7 +188,7 @@ class TableAssigner {
         return assignmentsMap;
     }
 
-    _findBestCombination(nbPersons, start, end, currentAssignments) {
+    _findBestCombination(nbPersons, start, end, currentAssignments, isAdult) {
         const candidates = this.validCombinations.filter(c => 
             c.capacity >= nbPersons && this._isTableAvailable(c.tables, start, end, currentAssignments)
         );
@@ -201,12 +203,29 @@ class TableAssigner {
             return count;
         };
 
+        const getAdultPenalty = (combo) => {
+            if (!isAdult) return 0;
+            let hasT = combo.tables.some(t => {
+                const tableConfig = this.tables.find(tc => tc.id === t);
+                return tableConfig && tableConfig.zone === "T";
+            });
+            return hasT ? 1 : 0;
+        };
+
         // Tri: 
+        // 0. (Adultes seulement) Éviter la zone T à tout prix
         // 1. Éviter la réutilisation de tables (ceux avec le moins de réutilisations d'abord)
         // 2. Préférence ABSOLUE pour une table simple plutôt qu'une fusion (si capacité suffisante)
         // 3. Priorité (1 = meilleur : STG > R > T)
-        // 4. Capacité (minimiser le gâchis)
+        // 4. Capacité (DESCENDANT) : Les plus grands groupes (traités en premier) 
+        // prendront les plus grandes tables de la zone pour avoir plus d'espace.
         candidates.sort((a, b) => {
+            if (isAdult) {
+                const penaltyA = getAdultPenalty(a);
+                const penaltyB = getAdultPenalty(b);
+                if (penaltyA !== penaltyB) return penaltyA - penaltyB;
+            }
+
             const reuseA = getReuseCount(a);
             const reuseB = getReuseCount(b);
             if (reuseA !== reuseB) return reuseA - reuseB;

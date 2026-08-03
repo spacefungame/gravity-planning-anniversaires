@@ -1144,6 +1144,13 @@ function renderPlanningAnniversaireA4() {
         }
     }
 
+    const isAdult = res.categories && (res.categories.includes("évènement adulte") || res.categories.includes("team building") || res.categories.includes("adulte"));
+    let prenomDisplayHtml = prenomDisplay === "???" ? "" : prenomDisplay;
+    if (isAdult) {
+        prenomDisplayHtml = `<span style="color:#ef4444; font-weight:bold;">Évènement adulte</span>`;
+        ageDisplay = ""; // On masque l'âge si c'est un évènement adulte par défaut
+    }
+
     // Récupérer les options consolidées (Brownie, crêpes, donuts, etc.)
     const opts = {};
     if (res.options) {
@@ -1274,7 +1281,7 @@ function renderPlanningAnniversaireA4() {
         <td>${activitesDisplay}</td>
         <td>${res.nbPersonnes || "?"}</td>
         <td style="${tableTdStyle} font-weight: bold; text-align: center;"><div contenteditable="true" onblur="appState.saveQweekleCustomTable('${res.id}', this.innerText)" style="cursor: text; min-height: 15px; outline: none;">${assignedTablesDisplay}</div></td>
-        <td><div contenteditable="true" onblur="if(appState.saveQweekleCustomEnfant) appState.saveQweekleCustomEnfant('${res.id}', 0, 'nom', this.innerText)" style="cursor: text; min-height: 15px; outline: none;">${prenomDisplay === "???" ? "" : prenomDisplay}</div></td>
+        <td><div contenteditable="true" onblur="if(appState.saveQweekleCustomEnfant) appState.saveQweekleCustomEnfant('${res.id}', 0, 'nom', this.innerText)" style="cursor: text; min-height: 15px; outline: none;">${prenomDisplayHtml}</div></td>
         <td><div contenteditable="true" onblur="if(appState.saveQweekleCustomEnfant) appState.saveQweekleCustomEnfant('${res.id}', 0, 'age', this.innerText)" style="cursor: text; min-height: 15px; outline: none;">${ageDisplay === "???" ? "" : ageDisplay}</div></td>
         <td class="${cellClass(opts.brownie)}">${opts.brownie || ""}</td>
         <td class="${cellClass(opts.gateauCrepes)}">${opts.gateauCrepes || ""}</td>
