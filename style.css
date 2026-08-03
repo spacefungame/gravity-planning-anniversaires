@@ -1521,14 +1521,14 @@ body {
     body:not(.print-error-report) > *:not(#app-content) {
         display: none !important;
     }
-    #app-content > *:not(#view-anniversaire) {
+    #app-content > *:not(.active) {
         display: none !important;
     }
-    #view-anniversaire .view-header {
+    .view-section.active .view-header {
         display: none !important;
     }
     
-    #view-anniversaire {
+    #view-anniversaire.active, #view-laser.active {
         position: absolute;
         top: 0;
         left: 0;

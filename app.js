@@ -206,7 +206,7 @@ function renderCurrentView() {
       renderPlanningAnniversaireA4();
       break;
     case "laser":
-      renderClassicPlanning("laser", "tbody-laser", "subtitle-laser");
+      renderLaserPlanning();
       break;
     case "team":
       renderClassicPlanning("team", "tbody-team", "subtitle-team");
@@ -624,6 +624,152 @@ function renderHomeDashboard() {
     `;
 
   loadHomeManualNote();
+}
+
+// ============================================================================
+// 5bis. RENDU DU PLANNING LASER GAME (TABLEAU A4)
+// ============================================================================
+function renderLaserPlanning() {
+  const tbody = document.getElementById("tbody-laser-a4");
+  const thead = document.getElementById("thead-laser-a4");
+  const dateTitle = document.getElementById("laser-a4-date-title");
+  if (!tbody || !thead) return;
+
+  // 1. Date title
+  const parts = appState.currentDate.split("-");
+  const d = new Date(parts[0], parts[1] - 1, parts[2]);
+  if (dateTitle) {
+    dateTitle.textContent = `${DAYS_FR[d.getDay()]} ${d.getDate()} ${MONTHS_FR[d.getMonth()]} ${parts[0]}`;
+  }
+
+  // 2. Récupérer les événements
+  const manualEvents = appState.getEventsForDate(appState.currentDate, "laser");
+  const allQweekle = appState.getQweekleReservationsForDate(appState.currentDate);
+  const qweekleLaser = allQweekle.filter(r => {
+      const actType = (r.typeActivite || "").toLowerCase();
+      const pack = (r.pack || "").toLowerCase();
+      return actType.includes("laser") || pack.includes("laser") || (r.activites && r.activites.some(a => (a.nom || "").toLowerCase().includes("laser")));
+  });
+
+  // 3. Normalisation des données
+  // Structure: timeGroups["10:20"] = [ { nom: "...", isAnniv: true, nb: 12 }, ... ]
+  const timeGroups = {};
+  
+  // Générer les tranches horaires
+  for (let h = CONFIG.HOURS_START; h <= CONFIG.HOURS_END; h++) {
+    const hourStr = String(h).padStart(2, '0');
+    timeGroups[`${hourStr}:00`] = [];
+    timeGroups[`${hourStr}:20`] = [];
+    timeGroups[`${hourStr}:40`] = [];
+  }
+
+  const addOrUpdateGroup = (time, nom, nb, isAnniv) => {
+    if (!time) return;
+    // Si l'heure n'est pas dans la plage (ex: 09:40), on l'ajoute quand même
+    if (!timeGroups[time]) timeGroups[time] = [];
+    let group = timeGroups[time].find(g => g.nom === nom);
+    if (group) {
+        group.nb += nb;
+        if (isAnniv) group.isAnniv = true;
+    } else {
+        timeGroups[time].push({ nom, nb, isAnniv });
+    }
+  };
+
+  // Traiter les événements manuels
+  manualEvents.forEach(ev => {
+      const time = ev.startHour; // Ex: "14:00"
+      let nb = 0; 
+      // tentative d'extraire un nombre du titre si présent (ex: "Groupe (12)")
+      const match = ev.title.match(/(\d+)/);
+      if (match) nb = parseInt(match[1], 10);
+
+      const isAnniv = (ev.title || "").toLowerCase().includes("anniv");
+      addOrUpdateGroup(time, ev.title, nb, isAnniv);
+  });
+
+  // Traiter Qweekle
+  qweekleLaser.forEach(r => {
+      let isAnniv = false;
+      let suffix = "";
+      if (r.categories && r.categories.includes("anniversaire")) isAnniv = true;
+      if (r.enfantAnniversaire && r.enfantAnniversaire.prenom) {
+          isAnniv = true;
+          suffix = ` (${r.enfantAnniversaire.prenom})`;
+      }
+      
+      const nomComplet = `${r.nom} ${r.prenom || ""}${suffix}`.trim();
+      
+      // Trouver les activités Laser
+      const laserActs = (r.activites || []).filter(a => (a.nom || "").toLowerCase().includes("laser"));
+      
+      if (laserActs.length > 0) {
+          laserActs.forEach(act => {
+              const time = act.heureDebut;
+              const nb = act.nbPersonnes || r.nbPersonnes || 1;
+              addOrUpdateGroup(time, nomComplet, nb, isAnniv);
+          });
+      } else {
+          // Si on est là c'est que le type ou le pack contient laser mais pas les activités détaillées
+          const time = r.heureArrivee;
+          const nb = r.nbPersonnes || 1;
+          addOrUpdateGroup(time, nomComplet, nb, isAnniv);
+      }
+  });
+
+  // 4. Calcul du nombre max de colonnes
+  let maxCols = 4;
+  for (const time in timeGroups) {
+      if (timeGroups[time].length > maxCols) {
+          maxCols = timeGroups[time].length;
+      }
+  }
+
+  // 5. Génération thead
+  let theadHtml = `<tr><th style="width: 5%; text-align: center; border: 1px solid #000; padding: 4px;">Heure</th>`;
+  for (let i = 1; i <= maxCols; i++) {
+      theadHtml += `<th style="border: 1px solid #000; padding: 4px;">Nom</th><th style="width: 4%; text-align: center; border: 1px solid #000; font-size: 0.7rem; padding: 4px;" title="Nombre">Nbre</th>`;
+  }
+  theadHtml += `<th style="width: 5%; text-align: center; border: 1px solid #000; padding: 4px;">Total</th><th style="width: 7%; text-align: center; border: 1px solid #000; font-size: 0.8rem; padding: 4px;">places dispos</th></tr>`;
+  thead.innerHTML = theadHtml;
+
+  // 6. Génération tbody (trier par heure)
+  tbody.innerHTML = "";
+  const sortedTimes = Object.keys(timeGroups).sort();
+  
+  sortedTimes.forEach(time => {
+      const groups = timeGroups[time];
+      
+      let total = 0;
+      groups.forEach(g => total += g.nb);
+      const dispo = 30 - total;
+      
+      const tr = document.createElement("tr");
+      
+      // Heure
+      let trHtml = `<td style="font-weight: bold; text-align: center; border: 1px solid #000; padding: 4px;">${time}</td>`;
+      
+      // Groupes
+      for (let i = 0; i < maxCols; i++) {
+          if (i < groups.length) {
+              const g = groups[i];
+              const bg = g.isAnniv ? "background-color: #FFFF00; font-weight: bold;" : "";
+              trHtml += `<td style="${bg} border-left: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 6px;">${g.nom}</td>`;
+              trHtml += `<td style="${bg} text-align: center; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 2px;">${g.nb > 0 ? g.nb : ''}</td>`;
+          } else {
+              trHtml += `<td style="border-left: 1px solid #000; border-bottom: 1px solid #000; padding: 4px;"></td><td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4px;"></td>`;
+          }
+      }
+      
+      // Totaux
+      const warningTotal = total > 30 ? "background-color: #F56565; color: white; font-weight: bold;" : "";
+      const warningDispo = dispo < 0 ? "background-color: #F56565; color: white; font-weight: bold;" : "";
+      trHtml += `<td style="text-align: center; font-weight: bold; border: 1px solid #000; padding: 4px; ${warningTotal}">${total}</td>`;
+      trHtml += `<td style="text-align: center; font-weight: bold; border: 1px solid #000; padding: 4px; ${warningDispo}">${dispo}</td>`;
+      
+      tr.innerHTML = trHtml;
+      tbody.appendChild(tr);
+  });
 }
 
 // ============================================================================

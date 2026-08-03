@@ -243,22 +243,31 @@
 
         <!-- VUE 4 : PLANNING LASER GAME -->
         <section id="view-laser" class="view-section">
-            <div class="view-header">
+            <div class="view-header no-print">
                 <div>
                     <h2>🔫 Planning Laser Game</h2>
                     <p class="view-subtitle" id="subtitle-laser">Sessions et départs dans l'arène Laser Game</p>
                 </div>
-                <button type="button" class="btn-add" onclick="openEventModal('laser')">+ Ajouter une session Laser Game</button>
+                <div style="display: flex; gap: 10px;">
+                    <div class="actions">
+                        <button class="btn-primary print-hide" onclick="window.print()">🖨️ Imprimer A4</button>
+                        <button class="btn-primary" onclick="syncQweekleReservations()">⚡ Sync Qweekle</button>
+                        <button type="button" class="btn-add" onclick="openEventModal('laser')">+ Ajouter une session</button>
+                    </div>
+                </div>
             </div>
-            <div class="classic-planning-container">
-                <table class="planning-table" id="table-laser">
-                    <thead>
-                        <tr>
-                            <th class="time-col">Horaire</th>
-                            <th>Sessions Laser Game (Equipements, Groupes, Arène)</th>
-                        </tr>
+            
+            <div class="a4-print-container" id="laser-a4-container">
+                <div style="background-color: #FFFF00; border: 1.5px solid #000; text-align: center; font-weight: bold; padding: 6px; font-size: 1.15rem; color: #000; text-transform: uppercase;">
+                    PLANNING LASER GAME - <span id="laser-a4-date-title"></span>
+                </div>
+                <table class="a4-planning-table a4-laser-table" id="table-laser-a4" style="border-top: none;">
+                    <thead id="thead-laser-a4">
+                        <!-- En-tête généré dynamiquement -->
                     </thead>
-                    <tbody id="tbody-laser"></tbody>
+                    <tbody id="tbody-laser-a4">
+                        <!-- Lignes de 20 minutes générées dynamiquement -->
+                    </tbody>
                 </table>
             </div>
         </section>
