@@ -1299,7 +1299,7 @@ function renderPlanningAnniversaireA4() {
         <td>${res.nom || "Client Inconnu"}${res.prenom ? " " + res.prenom : ""}</td>
         <td>${activitesDisplay}</td>
         <td>${res.nbPersonnes || "?"}</td>
-        <td style="${tableTdStyle} font-weight: bold; text-align: center;"><div contenteditable="true" onblur="appState.saveQweekleCustomTable('${res.id}', this.innerText)" style="cursor: text; min-height: 15px; outline: none;">${assignedTablesDisplay}</div></td>
+        <td style="${tableTdStyle} font-weight: bold; text-align: center;"><div contenteditable="true" onblur="handleManualTableUpdate('${res.id}', this.innerText)" style="cursor: text; min-height: 15px; outline: none;">${assignedTablesDisplay}</div></td>
         <td><div contenteditable="true" onblur="if(appState.saveQweekleCustomEnfant) appState.saveQweekleCustomEnfant('${res.id}', 0, 'nom', this.innerText)" style="cursor: text; min-height: 15px; outline: none;">${prenomDisplayHtml}</div></td>
         <td><div contenteditable="true" onblur="if(appState.saveQweekleCustomEnfant) appState.saveQweekleCustomEnfant('${res.id}', 0, 'age', this.innerText)" style="cursor: text; min-height: 15px; outline: none;">${ageDisplay === "???" ? "" : ageDisplay}</div></td>
         <td class="${cellClass(opts.brownie)}">${opts.brownie || ""}</td>
@@ -1319,6 +1319,25 @@ function renderPlanningAnniversaireA4() {
     tbody.appendChild(tr);
   });
 }
+
+// Fonction pour gérer la modification manuelle d'une table et rafraîchir dynamiquement
+function handleManualTableUpdate(resId, value) {
+    const oldVal = appState.getQweekleCustomTable(resId) || "";
+    // Remove warning text if they accidentally copied it
+    let newVal = value.replace(/⚠️.*$/g, '');
+    // Remove the HTML <br> and everything after if the user copied the full cell innerText
+    newVal = newVal.split('\\n')[0].trim();
+    
+    // Si la valeur a vraiment changé, on sauvegarde et on recalcule
+    if (oldVal !== newVal) {
+        appState.saveQweekleCustomTable(resId, newVal);
+        // Petit délai pour laisser le focus se perdre proprement
+        setTimeout(() => {
+            renderPlanningAnniversaireA4();
+        }, 50);
+    }
+}
+window.handleManualTableUpdate = handleManualTableUpdate;
 
 // ============================================================================
 // 7. RENDU ET GESTION DES POST-IT
