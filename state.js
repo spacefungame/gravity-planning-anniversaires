@@ -555,7 +555,11 @@ class AppStateManager {
                     activity: { label: lbl },
                     qty: item.qty,
                     type: item.type || "PRODUCT",
+                    deleted_at: item.deleted_at,
+                    state: item.state,
+                    global_status: item.global_status || item.state,
                     raw_payload: {
+                      ...item,
                       type: item.type || "PRODUCT",
                       label: lbl,
                       order_item: { order_id: orderData.id },
