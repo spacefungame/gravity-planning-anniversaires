@@ -217,6 +217,7 @@ class AppStateManager {
 
     const note = this.getQweekleCustomNote(bookingId);
     const enfants = this.getQweekleCustomEnfants(bookingId);
+    const table = this.getQweekleCustomTable(bookingId);
 
     const payload = {
       qweekle_booking_id: `NOTE_${bookingId}`,
@@ -225,6 +226,7 @@ class AppStateManager {
       raw_payload: {
         customNote: note,
         customEnfants: enfants,
+        customTable: table,
       },
     };
 
@@ -331,8 +333,8 @@ class AppStateManager {
       localStorage.setItem("SFG_QWEEKLE_TABLE_STORE", JSON.stringify(store));
     }
     
-    // Si besoin on peut aussi pousser vers Supabase, mais les tables sont temporaires par jour
-    // this.pushCustomOverrideToSupabase(bookingId);
+    // Synchroniser avec Supabase
+    this.pushCustomOverrideToSupabase(bookingId);
   }
 
   getQweekleCustomTable(bookingId) {
@@ -349,14 +351,15 @@ class AppStateManager {
     const store = this.hasLocalStorage()
       ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_NOTES_STORE") || "{}")
       : {};
-    return store[bookingId] || "";
+    return store[bookingId];
   }
 
   saveQweekleCustomNote(bookingId, noteText) {
     const store = this.hasLocalStorage()
       ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_NOTES_STORE") || "{}")
       : {};
-    if (noteText && noteText.trim() !== "") {
+    
+    if (noteText !== null && noteText !== undefined) {
       store[bookingId] = noteText.trim();
     } else {
       delete store[bookingId];
@@ -395,13 +398,14 @@ class AppStateManager {
         if (r.qweekle_booking_id && r.qweekle_booking_id.startsWith("NOTE_")) {
           const bid = r.qweekle_booking_id.replace("NOTE_", "");
           if (r.raw_payload) {
-            if (r.raw_payload.customNote !== undefined) {
+              if (r.raw_payload.customNote !== undefined) {
               const store = this.hasLocalStorage()
                 ? JSON.parse(
                     localStorage.getItem("SFG_QWEEKLE_NOTES_STORE") || "{}",
                   )
                 : {};
-              if (r.raw_payload.customNote)
+              // On accepte explicitement les chaînes vides ("") pour la suppression de notes
+              if (r.raw_payload.customNote !== null && r.raw_payload.customNote !== undefined)
                 store[bid] = r.raw_payload.customNote;
               else delete store[bid];
               if (this.hasLocalStorage())
@@ -421,6 +425,21 @@ class AppStateManager {
                 localStorage.setItem(
                   "SFG_QWEEKLE_ENFANTS_STORE",
                   JSON.stringify(eStore),
+                );
+            }
+            if (r.raw_payload.customTable !== undefined) {
+              const tStore = this.hasLocalStorage()
+                ? JSON.parse(
+                    localStorage.getItem("SFG_QWEEKLE_TABLE_STORE") || "{}",
+                  )
+                : {};
+              if (r.raw_payload.customTable)
+                tStore[bid] = r.raw_payload.customTable;
+              else delete tStore[bid];
+              if (this.hasLocalStorage())
+                localStorage.setItem(
+                  "SFG_QWEEKLE_TABLE_STORE",
+                  JSON.stringify(tStore),
                 );
             }
           }

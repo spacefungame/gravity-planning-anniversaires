@@ -1221,10 +1221,14 @@ function renderPlanningAnniversaireA4() {
     // Couleur des cellules optionnelles (comme dans l'excel)
     const cellClass = (val) => val > 0 ? 'bg-yellow' : '';
 
-    const customNote = appState.getQweekleCustomNote(res.id) || "";
-    let finalCommentaire = customNote;
-    if (res.qweekleNote || res.qweekleInternalNote) {
-        finalCommentaire += (finalCommentaire ? "\\n" : "") + (res.qweekleNote || "") + " " + (res.qweekleInternalNote || "");
+    const customNote = appState.getQweekleCustomNote(res.id);
+    let finalCommentaire = "";
+    if (customNote !== undefined) {
+        finalCommentaire = customNote;
+    } else {
+        if (res.qweekleNote || res.qweekleInternalNote) {
+            finalCommentaire = (res.qweekleNote || "") + (res.qweekleNote && res.qweekleInternalNote ? "\\n" : "") + (res.qweekleInternalNote || "");
+        }
     }
     finalCommentaire = finalCommentaire.trim().replace(/\\n/g, "<br>");
 
