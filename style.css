@@ -1551,6 +1551,13 @@ body {
     .a4-planning-table {
         font-size: 8pt;
     }
+
+    .a4-laser-table th, .a4-laser-table td {
+        padding: 1px 2px !important;
+        line-height: 1 !important;
+        height: 14px !important;
+        font-size: 8pt !important;
+    }
     
     .a4-planning-table th {
         background-color: #F7FAFC !important;
