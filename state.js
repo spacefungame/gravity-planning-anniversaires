@@ -207,6 +207,47 @@ class AppStateManager {
     return store[bookingId] || {};
   }
 
+  async pushCustomOverrideToSupabase(bookingId) {
+    if (
+      typeof CONFIG === "undefined" ||
+      !CONFIG.SUPABASE_URL ||
+      !CONFIG.SUPABASE_KEY
+    )
+      return;
+
+    const note = this.getQweekleCustomNote(bookingId);
+    const enfants = this.getQweekleCustomEnfants(bookingId);
+
+    const payload = {
+      qweekle_booking_id: `NOTE_${bookingId}`,
+      order_id: "CUSTOM_NOTE",
+      start_at: `${this.currentDate}T00:00:00+00:00`,
+      raw_payload: {
+        customNote: note,
+        customEnfants: enfants,
+      },
+    };
+
+    try {
+      await fetch(
+        CONFIG.SUPABASE_URL +
+          "/rest/v1/booking_activities?on_conflict=qweekle_booking_id",
+        {
+          method: "POST",
+          headers: {
+            apikey: CONFIG.SUPABASE_KEY,
+            Authorization: `Bearer ${CONFIG.SUPABASE_KEY}`,
+            "Content-Type": "application/json",
+            Prefer: "resolution=merge-duplicates",
+          },
+          body: JSON.stringify(payload),
+        },
+      );
+    } catch (e) {
+      console.warn("Erreur push custom override", e);
+    }
+  }
+
   saveQweekleCustomEnfant(bookingId, index, key, value) {
     const store = this.hasLocalStorage()
       ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_ENFANTS_STORE") || "{}")
@@ -227,6 +268,9 @@ class AppStateManager {
     if (this.hasLocalStorage()) {
       localStorage.setItem("SFG_QWEEKLE_ENFANTS_STORE", JSON.stringify(store));
     }
+
+    // Synchroniser avec Supabase
+    this.pushCustomOverrideToSupabase(bookingId);
   }
 
   // =========================================================================
@@ -250,6 +294,71 @@ class AppStateManager {
     }
     if (this.hasLocalStorage()) {
       localStorage.setItem("SFG_QWEEKLE_NOTES_STORE", JSON.stringify(store));
+    }
+
+    // Synchroniser avec Supabase
+    this.pushCustomOverrideToSupabase(bookingId);
+  }
+
+  // =========================================================================
+  // GESTION ET SYNCHRONISATION DES OVERRIDES DEPUIS SUPABASE
+  // =========================================================================
+  async syncOverridesFromSupabase(dateStr) {
+    if (
+      typeof CONFIG === "undefined" ||
+      !CONFIG.SUPABASE_URL ||
+      !CONFIG.SUPABASE_KEY
+    )
+      return;
+    try {
+      const url = `${CONFIG.SUPABASE_URL}/rest/v1/booking_activities?select=qweekle_booking_id,raw_payload&qweekle_booking_id=like.NOTE_*&start_at=gte.${dateStr}T00:00:00&start_at=lte.${dateStr}T23:59:59`;
+      const res = await fetch(url, {
+        headers: {
+          apikey: CONFIG.SUPABASE_KEY,
+          Authorization: `Bearer ${CONFIG.SUPABASE_KEY}`,
+          Accept: "application/json",
+        },
+      });
+      if (!res.ok) return;
+      const rows = await res.json();
+
+      rows.forEach((r) => {
+        if (r.qweekle_booking_id && r.qweekle_booking_id.startsWith("NOTE_")) {
+          const bid = r.qweekle_booking_id.replace("NOTE_", "");
+          if (r.raw_payload) {
+            if (r.raw_payload.customNote !== undefined) {
+              const store = this.hasLocalStorage()
+                ? JSON.parse(
+                    localStorage.getItem("SFG_QWEEKLE_NOTES_STORE") || "{}",
+                  )
+                : {};
+              if (r.raw_payload.customNote)
+                store[bid] = r.raw_payload.customNote;
+              else delete store[bid];
+              if (this.hasLocalStorage())
+                localStorage.setItem(
+                  "SFG_QWEEKLE_NOTES_STORE",
+                  JSON.stringify(store),
+                );
+            }
+            if (r.raw_payload.customEnfants) {
+              const eStore = this.hasLocalStorage()
+                ? JSON.parse(
+                    localStorage.getItem("SFG_QWEEKLE_ENFANTS_STORE") || "{}",
+                  )
+                : {};
+              eStore[bid] = r.raw_payload.customEnfants;
+              if (this.hasLocalStorage())
+                localStorage.setItem(
+                  "SFG_QWEEKLE_ENFANTS_STORE",
+                  JSON.stringify(eStore),
+                );
+            }
+          }
+        }
+      });
+    } catch (e) {
+      console.warn("Erreur sync overrides", e);
     }
   }
 
@@ -339,6 +448,9 @@ class AppStateManager {
         data: this.getQweekleReservationsForDate(dateStr),
       };
     }
+
+    // Avant de faire quoi que ce soit, on récupère les notes manuelles partagées
+    await this.syncOverridesFromSupabase(dateStr);
 
     // 1. Tenter en direct via l'API REST officielle de Qweekle (Priorité 1 absolue maintenant qu'on a le token !)
     if (CONFIG.QWEEKLE_API_TOKEN && CONFIG.QWEEKLE_API_BASE_URL) {
@@ -710,7 +822,46 @@ class AppStateManager {
   parseSupabaseActivitiesToBookings(rows, dateStr) {
     // Collecter les order_id légitimes pour la date ciblée (ceux qui ont une activité ce jour-là)
     const validOrderIds = new Set();
+    const cleanRows = [];
+
     (rows || []).forEach((r) => {
+      // 1. Intercepter les notes/overrides globaux
+      if (r.qweekle_booking_id && r.qweekle_booking_id.startsWith("NOTE_")) {
+        const bid = r.qweekle_booking_id.replace("NOTE_", "");
+        if (r.raw_payload) {
+          if (r.raw_payload.customNote !== undefined) {
+            const store = this.hasLocalStorage()
+              ? JSON.parse(
+                  localStorage.getItem("SFG_QWEEKLE_NOTES_STORE") || "{}",
+                )
+              : {};
+            if (r.raw_payload.customNote) store[bid] = r.raw_payload.customNote;
+            else delete store[bid];
+            if (this.hasLocalStorage())
+              localStorage.setItem(
+                "SFG_QWEEKLE_NOTES_STORE",
+                JSON.stringify(store),
+              );
+          }
+          if (r.raw_payload.customEnfants) {
+            const eStore = this.hasLocalStorage()
+              ? JSON.parse(
+                  localStorage.getItem("SFG_QWEEKLE_ENFANTS_STORE") || "{}",
+                )
+              : {};
+            eStore[bid] = r.raw_payload.customEnfants;
+            if (this.hasLocalStorage())
+              localStorage.setItem(
+                "SFG_QWEEKLE_ENFANTS_STORE",
+                JSON.stringify(eStore),
+              );
+          }
+        }
+        return; // on ne le garde pas comme une vraie réservation
+      }
+
+      cleanRows.push(r);
+
       if (
         r.start_at &&
         new Date(r.start_at).toLocaleDateString("en-CA", {
@@ -721,6 +872,9 @@ class AppStateManager {
         if (r.qweekle_booking_id) validOrderIds.add(r.qweekle_booking_id);
       }
     });
+
+    // Remplacer rows par cleanRows
+    rows = cleanRows;
 
     // Filtrer par date locale du dossier OU conserver si la ligne est une option rattachée à un order_id de ce jour
     const filteredRows = (rows || []).filter((r) => {
