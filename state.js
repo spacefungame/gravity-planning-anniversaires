@@ -2578,7 +2578,7 @@ class AppStateManager {
 
     // Team building: team building (strict pour ne pas matcher "team games"), entreprise, séminaire, challenge entreprise
     if (
-      /\b(team\s+building|séminaire|séminaires|entreprise|entreprises|collaborateur|collaborateurs|teambuilding)\b/i.test(
+      /\b(team\s+building|s[eéè]minaire|s[eéè]minaires|entreprise|entreprises|collaborateur|collaborateurs|teambuilding)\b/i.test(
         fullStr,
       )
     ) {
@@ -2587,14 +2587,14 @@ class AppStateManager {
 
     // Évènement adulte: évènement, soirée privée, gala, cocktail
     if (
-      /\b(évènement|evenement|soirée\s+privée|gala|cocktail)\b/i.test(fullStr)
+      /\b([eéè]v[eéè]nement|soir[eéè]e\s+priv[eéè]e|gala|cocktail)\b/i.test(fullStr)
     ) {
       cats.push("évènement adulte");
     }
 
     // ASBL / Association: asbl, association, école, ecole, centre de jeunesse, centre de loisirs, maison de jeunes, mj
     if (
-      /\b(asbl|association|école|ecole|centre\s+de\s+jeunesse|centre\s+de\s+loisirs|maison\s+de\s+jeunes|mj)\b/i.test(
+      /\b(asbl|association|[eéè]cole|centre\s+de\s+jeunesse|centre\s+de\s+loisirs|maison\s+de\s+jeunes|mj)\b/i.test(
         fullStr,
       )
     ) {
