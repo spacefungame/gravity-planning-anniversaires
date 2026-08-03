@@ -1003,7 +1003,7 @@ class AppStateManager {
         r.qweekle_booking_id ||
         r.id;
 
-      if (hiddenStore[oid] || hiddenStore[r.qweekle_booking_id] || hiddenStore[r.id]) {
+      if (hiddenStore[oid] || hiddenStore[`QW-${oid}`] || hiddenStore[r.qweekle_booking_id] || hiddenStore[r.id]) {
         return; // IGNORER LES RÉSERVATIONS MASQUÉES
       }
 
