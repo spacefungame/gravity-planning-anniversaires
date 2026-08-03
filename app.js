@@ -197,11 +197,7 @@ function renderCurrentView() {
       renderPlanningComplet();
       break;
     case "anniversaire":
-      renderClassicPlanning(
-        "anniversaire",
-        "tbody-anniversaire",
-        "subtitle-anniversaire",
-      );
+      renderPlanningAnniversaireA4();
       break;
     case "laser":
       renderClassicPlanning("laser", "tbody-laser", "subtitle-laser");
@@ -1041,10 +1037,182 @@ async function syncQweekleReservations(silent = false) {
     appState.currentTab === "planning-complet"
   ) {
     renderPlanningComplet();
+  } else if (currentActiveTab === "anniversaire") {
+    renderPlanningAnniversaireA4();
   } else if (currentActiveTab === "home") {
     renderHomeDashboard();
     renderCalendar();
   }
+}
+
+// ============================================================================
+// 6ter. RENDU DU PLANNING ANNIVERSAIRE A4 DENSE
+// ============================================================================
+function renderPlanningAnniversaireA4() {
+  const tbody = document.getElementById("tbody-anniversaire-a4");
+  if (!tbody) return;
+
+  // Mise à jour de la bannière
+  const parts = appState.currentDate.split("-");
+  const d = new Date(parts[0], parts[1] - 1, parts[2]);
+  const formattedDate = `${DAYS_FR[d.getDay()]} ${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+  const dateBanner = document.getElementById("a4-anniv-date");
+  if (dateBanner) dateBanner.textContent = formattedDate;
+
+  // Récupérer et filtrer les réservations Qweekle
+  let reservations = appState.getQweekleReservationsForDate(appState.currentDate) || [];
+  
+  // Filtrer uniquement celles qui ont une "table réservée" (Anniversaires et Evènements adultes)
+  reservations = reservations.filter(res => {
+    return res.activites && res.activites.some(a => 
+      a.nom.toLowerCase().includes("table réservée") || 
+      a.nom.toLowerCase().includes("table reservee")
+    );
+  });
+
+  // Déclencher une synchronisation automatique
+  appState._autoSyncedDates = appState._autoSyncedDates || {};
+  if (!appState._autoSyncedDates[appState.currentDate]) {
+    appState._autoSyncedDates[appState.currentDate] = true;
+    setTimeout(() => {
+      syncQweekleReservations(true);
+    }, 10);
+  }
+
+  tbody.innerHTML = "";
+
+  if (reservations.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="20" style="text-align: center; padding: 20px;">Aucun anniversaire prévu pour le ${formattedDate}.</td></tr>`;
+      return;
+  }
+
+  // Trier par heure de début
+  reservations.sort((a, b) => a.heureDebut.localeCompare(b.heureDebut));
+
+  reservations.forEach(res => {
+    const tr = document.createElement("tr");
+
+    // Extraction des prénoms et âges
+    const enfantsInfos = appState.getQweekleCustomEnfants(res.id) || {};
+    let prenomDisplay = enfantsInfos[0]?.nom || "???";
+    let ageDisplay = enfantsInfos[0]?.age || "???";
+    
+    // Si vide ou "???", essayer de trouver dans la string enfants si elle existe
+    if (prenomDisplay === "???" && res.enfants && res.enfants.length > 0) {
+        prenomDisplay = res.enfants[0].prenom || "???";
+        let a = res.enfants[0].age;
+        if (a && a !== "Non précisé" && !isNaN(Number(a))) {
+            ageDisplay = Number(a);
+        }
+    }
+
+    // Récupérer les options consolidées (Brownie, crêpes, donuts, etc.)
+    const opts = {};
+    if (res.options) {
+        res.options.forEach(o => {
+            const lbl = (o.label || "").toLowerCase();
+            if (lbl.includes("brownie")) opts.brownie = (opts.brownie || 0) + o.qty;
+            if (lbl.includes("gâteau de crêpe") || lbl.includes("gateau de crepe") || (lbl.includes("gâteau") && lbl.includes("crêpe"))) opts.gateauCrepes = (opts.gateauCrepes || 0) + o.qty;
+            if (lbl.includes("donut")) opts.donuts = (opts.donuts || 0) + o.qty;
+            if (lbl.includes("bonbon")) opts.bonbons = (opts.bonbons || 0) + o.qty;
+            if (lbl.includes("kidibul")) opts.kidibul = (opts.kidibul || 0) + o.qty;
+            if (lbl.includes("chips")) opts.chips = (opts.chips || 0) + o.qty;
+            if (lbl === "crêpe(s)" || (lbl.includes("crêpe") && !lbl.includes("gâteau"))) opts.crepes = (opts.crepes || 0) + o.qty;
+            if (lbl.includes("granité 200") || lbl.includes("granite 200") || lbl.includes("petit granité")) opts.granite200 = (opts.granite200 || 0) + o.qty;
+            if (lbl.includes("granité 350") || lbl.includes("granite 350") || lbl.includes("grand granité")) opts.granite350 = (opts.granite350 || 0) + o.qty;
+        });
+    }
+
+    // Heure de la pause
+    let heurePause = "";
+    if (res.activites) {
+        const pauseAct = res.activites.find(a => 
+            a.nom.toLowerCase().includes("table réservée") || 
+            a.nom.toLowerCase().includes("table reservee")
+        );
+        if (pauseAct) {
+            heurePause = `${pauseAct.heureDebut}`;
+            
+            // Format excel ex: brownie à 17h20
+            const items = [];
+            if (opts.brownie) items.push("brownie");
+            if (opts.gateauCrepes) items.push("gâteau de crêpes");
+            if (opts.crepes) items.push("crêpes");
+            if (items.length > 0) {
+                heurePause = `${items.join(" et ")} à ${heurePause}`;
+            }
+        }
+    }
+
+    // Activités 
+    let activitesDisplay = res.nomPack || "Anniversaire";
+    if (res.activites && res.activites.length > 0) {
+        // Tenter d'extraire la durée ou le nombre de parties
+        let countHeure = 0;
+        let countParties = 0;
+        res.activites.forEach(a => {
+            const nom = a.nom.toLowerCase();
+            if (nom.includes("laser") || nom.includes("partie")) countParties++;
+            if (nom.includes("team game") || nom.includes("1 heure")) countHeure++;
+        });
+        
+        let acts = [];
+        if (countHeure > 0) acts.push(`${countHeure}H`);
+        if (countParties > 0) acts.push(`${countParties} partie${countParties > 1 ? 's' : ''}`);
+        
+        if (acts.length > 0) {
+            activitesDisplay = acts.join(" + ");
+        }
+    }
+
+    // Couleur des cellules optionnelles (comme dans l'excel)
+    const cellClass = (val) => val > 0 ? 'bg-yellow' : '';
+
+    const customNote = appState.getQweekleCustomNote(res.id) || "";
+    let finalCommentaire = customNote;
+    if (res.qweekleNote || res.qweekleInternalNote) {
+        finalCommentaire += (finalCommentaire ? "\\n" : "") + (res.qweekleNote || "") + " " + (res.qweekleInternalNote || "");
+    }
+    finalCommentaire = finalCommentaire.trim().replace(/\\n/g, "<br>");
+
+    const emailAlerts = appState.hasLocalStorage() ? JSON.parse(localStorage.getItem("SFG_EMAIL_ALERTS_STORE") || "{}") : {};
+    const bookingAlerts = emailAlerts[res.id] || [];
+    const hasUnreadAlert = bookingAlerts.some(a => a.status !== 'read');
+    if (hasUnreadAlert) {
+        finalCommentaire += `<br><span style="color: #ef4444; font-weight: bold;">📩 ALERTE EMAIL</span>`;
+    }
+
+    // Règle où placer
+    let ouPlacerClass = '';
+    const nbP = Number(res.nbPersonnes) || 0;
+    if (nbP < 8 && nbP > 0) ouPlacerClass = 'bg-blue';
+    else if (nbP > 12) ouPlacerClass = 'bg-red';
+    else if (nbP >= 8 && nbP <= 12) ouPlacerClass = 'bg-orange';
+
+    tr.innerHTML = \`
+        <td>\${res.heureDebut} - \${res.heureFin}</td>
+        <td>\${res.nomClient || "Client Inconnu"}\${res.prenom ? " " + res.prenom : ""}</td>
+        <td>\${activitesDisplay}</td>
+        <td>\${res.nbPersonnes || "?"}</td>
+        <td class="\${ouPlacerClass}"></td>
+        <td><div contenteditable="true" onblur="if(appState.saveQweekleCustomEnfant) appState.saveQweekleCustomEnfant('\${res.id}', 0, 'nom', this.innerText)" style="cursor: text; min-height: 15px; outline: none;">\${prenomDisplay === "???" ? "" : prenomDisplay}</div></td>
+        <td><div contenteditable="true" onblur="if(appState.saveQweekleCustomEnfant) appState.saveQweekleCustomEnfant('\${res.id}', 0, 'age', this.innerText)" style="cursor: text; min-height: 15px; outline: none;">\${ageDisplay === "???" ? "" : ageDisplay}</div></td>
+        <td class="\${cellClass(opts.brownie)}">\${opts.brownie || ""}</td>
+        <td class="\${cellClass(opts.gateauCrepes)}">\${opts.gateauCrepes || ""}</td>
+        <td class="\${cellClass(opts.donuts)}">\${opts.donuts || ""}</td>
+        <td class="\${cellClass(opts.bonbons)}">\${opts.bonbons || ""}</td>
+        <td class="\${cellClass(opts.kidibul)}">\${opts.kidibul || ""}</td>
+        <td class="\${cellClass(opts.chips)}">\${opts.chips || ""}</td>
+        <td class="\${cellClass(opts.crepes)}">\${opts.crepes || ""}</td>
+        <td class="\${cellClass(opts.granite200)}">\${opts.granite200 || ""}</td>
+        <td class="\${cellClass(opts.granite350)}">\${opts.granite350 || ""}</td>
+        <td>\${heurePause}</td>
+        <td style="font-size: 0.65rem; text-align: left;"><div contenteditable="true" onblur="appState.saveQweekleCustomNote('\${res.id}', this.innerHTML.replace(/<br>/g, '\\n'))" style="cursor: text; min-height: 20px; outline: none;">\${finalCommentaire}</div></td>
+        <td></td>
+        <td></td>
+    \`;
+    tbody.appendChild(tr);
+  });
 }
 
 // ============================================================================

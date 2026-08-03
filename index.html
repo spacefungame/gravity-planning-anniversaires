@@ -191,22 +191,50 @@
 
         <!-- VUE 3 : PLANNING ANNIVERSAIRE -->
         <section id="view-anniversaire" class="view-section">
-            <div class="view-header">
+            <div class="view-header no-print">
                 <div>
                     <h2>🎂 Planning Anniversaire</h2>
                     <p class="view-subtitle" id="subtitle-anniversaire">Organisation des anniversaires, salles et formules</p>
                 </div>
-                <button type="button" class="btn-add" onclick="openEventModal('anniversaire')">+ Ajouter un Anniversaire</button>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn-sync" onclick="syncQweekleReservations()">⚡ Sync Qweekle</button>
+                    <button type="button" class="btn-add" style="background: #2F855A; border-color: #276749;" onclick="window.print()">🖨️ Imprimer A4</button>
+                </div>
             </div>
-            <div class="classic-planning-container">
-                <table class="planning-table" id="table-anniversaire">
+            
+            <div class="a4-print-container" id="anniversaire-a4-container">
+                <div class="a4-anniv-banner">
+                    <div class="a4-anniv-date" id="a4-anniv-date">samedi 27/06</div>
+                    <div class="a4-anniv-warning">A chaque arrivée d'anniv, faire payer le client avant de s'asseoir</div>
+                </div>
+                <table class="a4-planning-table" id="table-anniversaire-a4">
                     <thead>
                         <tr>
-                            <th class="time-col">Horaire</th>
-                            <th>Réservations Anniversaires (Salles, Gâteaux, Accompagnateurs)</th>
+                            <th style="width: 6%;">Heure</th>
+                            <th style="width: 14%;">Nom + prénom</th>
+                            <th style="width: 12%;">Activitées</th>
+                            <th style="width: 3%;">Nom<br>bre</th>
+                            <th style="width: 5%;">Où les<br>placer?</th>
+                            <th style="width: 9%;">Prénom</th>
+                            <th style="width: 3%;">Age</th>
+                            <th class="col-rot" style="width: 3%;"><div><span>Brownie</span></div></th>
+                            <th class="col-rot" style="width: 3%;"><div><span>gâteau de<br>crêpes</span></div></th>
+                            <th class="col-rot" style="width: 3%;"><div><span>Donuts</span></div></th>
+                            <th class="col-rot" style="width: 3%;"><div><span>Bonbons</span></div></th>
+                            <th class="col-rot" style="width: 3%;"><div><span>Kidibul</span></div></th>
+                            <th class="col-rot" style="width: 3%;"><div><span>chips</span></div></th>
+                            <th class="col-rot" style="width: 3%;"><div><span>crêpes</span></div></th>
+                            <th class="col-rot" style="width: 3%;"><div><span>granité<br>200 ml</span></div></th>
+                            <th class="col-rot" style="width: 3%;"><div><span>granité<br>350 ml</span></div></th>
+                            <th style="width: 10%;">Heure de la Pause<br>(ENVELOPPE CADEAU +<br>GATEAU)</th>
+                            <th style="width: 10%;">COMMENTAIRE</th>
+                            <th class="col-rot" style="width: 2%;"><div><span>Arrivé</span></div></th>
+                            <th class="col-rot" style="width: 2%;"><div><span>Payé</span></div></th>
                         </tr>
                     </thead>
-                    <tbody id="tbody-anniversaire"></tbody>
+                    <tbody id="tbody-anniversaire-a4">
+                        <!-- Les lignes seront injectées par JavaScript -->
+                    </tbody>
                 </table>
             </div>
         </section>
