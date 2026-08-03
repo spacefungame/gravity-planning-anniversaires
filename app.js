@@ -1221,9 +1221,12 @@ function openEmailAlertsModal(bookingId) {
       });
       return `
         <div class="email-alert-card" style="background: #fff; border: 1px solid #e2e8f0; border-left: 4px solid #ef4444; border-radius: 6px; padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
             <strong style="color: #2d3748; font-size: 0.95rem;">${alert.email_subject || 'Email Qweekle'}</strong>
             <span style="color: #718096; font-size: 0.8rem;">${dateStr}</span>
+          </div>
+          <div style="color: #4a5568; font-size: 0.85rem; margin-bottom: 10px;">
+            De: <strong style="color: #2b6cb0;">${alert.email_sender || 'Expéditeur inconnu'}</strong>
           </div>
           <div style="background: #f7fafc; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 0.9rem; color: #e53e3e; white-space: pre-wrap; margin-bottom: 12px; border: 1px dashed #feb2b2;">${alert.detected_changes}</div>
           <div style="text-align: right;">

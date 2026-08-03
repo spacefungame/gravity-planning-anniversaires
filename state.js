@@ -418,7 +418,7 @@ class AppStateManager {
     try {
       // On récupère toutes les alertes non résolues (ou liées à des réservations récentes)
       // Pour simplifier, on prend celles dont le status n'est pas 'resolved'
-      const url = `${CONFIG.SUPABASE_URL}/rest/v1/email_alerts?status=eq.unread`;
+      const url = `${CONFIG.SUPABASE_URL}/rest/v1/email_alerts?status=eq.unread&select=id,qweekle_booking_id,email_subject,email_sender,detected_changes,received_at`;
       const res = await fetch(url, {
         headers: {
           apikey: CONFIG.SUPABASE_KEY,
