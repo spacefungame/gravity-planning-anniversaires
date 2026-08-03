@@ -698,7 +698,17 @@ function renderLaserPlanning() {
           suffix = ` (${r.enfantAnniversaire.prenom})`;
       }
       
-      const nomComplet = `${r.nom} ${r.prenom || ""}${suffix}`.trim();
+      let tags = [];
+      if (r.categories) {
+          if (r.categories.includes("enfant")) tags.push("Enf");
+          if (r.categories.includes("ado")) tags.push("Ado");
+          if (r.categories.includes("adulte") || r.categories.includes("évènement adulte")) tags.push("Adulte");
+          if (r.categories.includes("team building")) tags.push("TB");
+          if (r.categories.includes("asbl")) tags.push("ASBL");
+      }
+      const tagStr = tags.length > 0 ? ` <span style="font-size:0.65rem; font-weight:normal; color:#4a5568;">[${tags.join(',')}]</span>` : "";
+      
+      const nomComplet = `${r.nom} ${r.prenom || ""}${suffix}${tagStr}`.trim();
       
       // Trouver les activités Laser
       const laserActs = (r.activites || []).filter(a => (a.nom || "").toLowerCase().includes("laser"));
