@@ -1096,6 +1096,16 @@ function renderPlanningAnniversaireA4() {
   }
 
   // Extraire l'heure d'affichage pour le tri et le rendu
+  let totalBrownie = 0;
+  let totalGateauCrepes = 0;
+  let totalDonuts = 0;
+  let totalBonbons = 0;
+  let totalKidibul = 0;
+  let totalChips = 0;
+  let totalCrepes = 0;
+  let totalGranite200 = 0;
+  let totalGranite350 = 0;
+
   reservations.forEach(res => {
       res._heureAffichage = res.heureArrivee || "";
       res._heureFinAffichage = res.heureDepart || "";
@@ -1198,6 +1208,17 @@ function renderPlanningAnniversaireA4() {
     }
 
     // Heure de la pause
+    
+    // Cumul des totaux
+    totalBrownie += opts.brownie || 0;
+    totalGateauCrepes += opts.gateauCrepes || 0;
+    totalDonuts += opts.donuts || 0;
+    totalBonbons += opts.bonbons || 0;
+    totalKidibul += opts.kidibul || 0;
+    totalChips += opts.chips || 0;
+    totalCrepes += opts.crepes || 0;
+    totalGranite200 += opts.granite200 || 0;
+    totalGranite350 += opts.granite350 || 0;
     let heurePause = "";
     if (res.activites) {
         const pauseAct = res.activites.find(a => 
@@ -1318,6 +1339,24 @@ function renderPlanningAnniversaireA4() {
     `;
     tbody.appendChild(tr);
   });
+  
+  if (reservations.length > 0) {
+      const trTotals = document.createElement("tr");
+      trTotals.innerHTML = `
+          <td colspan="7" style="text-align: right; font-weight: bold; background-color: #F7FAFC;">TOTAL :</td>
+          <td style="font-weight: bold; background-color: #F7FAFC; color: #2D3748;">${totalBrownie || ""}</td>
+          <td style="font-weight: bold; background-color: #F7FAFC; color: #2D3748;">${totalGateauCrepes || ""}</td>
+          <td style="font-weight: bold; background-color: #F7FAFC; color: #2D3748;">${totalDonuts || ""}</td>
+          <td style="font-weight: bold; background-color: #F7FAFC; color: #2D3748;">${totalBonbons || ""}</td>
+          <td style="font-weight: bold; background-color: #F7FAFC; color: #2D3748;">${totalKidibul || ""}</td>
+          <td style="font-weight: bold; background-color: #F7FAFC; color: #2D3748;">${totalChips || ""}</td>
+          <td style="font-weight: bold; background-color: #F7FAFC; color: #2D3748;">${totalCrepes || ""}</td>
+          <td style="font-weight: bold; background-color: #F7FAFC; color: #2D3748;">${totalGranite200 || ""}</td>
+          <td style="font-weight: bold; background-color: #F7FAFC; color: #2D3748;">${totalGranite350 || ""}</td>
+          <td colspan="4" style="background-color: #F7FAFC;"></td>
+      `;
+      tbody.appendChild(trTotals);
+  }
 }
 
 // Fonction pour gérer la modification manuelle d'une table et rafraîchir dynamiquement
