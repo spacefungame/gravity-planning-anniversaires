@@ -250,6 +250,79 @@ class AppStateManager {
     }
   }
 
+  // =========================================================================
+  // GESTION DES TABLES PERSONNALISÉES
+  // =========================================================================
+  getCustomTables() {
+    if (this.hasLocalStorage()) {
+      const stored = localStorage.getItem("SFG_CUSTOM_TABLES");
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch(e) {}
+      }
+    }
+    return null;
+  }
+
+  saveCustomTables(tables) {
+    if (this.hasLocalStorage()) {
+      localStorage.setItem("SFG_CUSTOM_TABLES", JSON.stringify(tables));
+    }
+    this.pushCustomTablesToSupabase(tables);
+  }
+
+  async pushCustomTablesToSupabase(tables) {
+    if (typeof CONFIG === "undefined" || !CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_KEY) return;
+
+    const payload = {
+      qweekle_booking_id: `GLOBAL_CONFIG_TABLES`,
+      order_id: "CUSTOM_CONFIG",
+      start_at: `2099-12-31T00:00:00+00:00`,
+      raw_payload: { tables: tables }
+    };
+
+    try {
+      await fetch(
+        CONFIG.SUPABASE_URL + "/rest/v1/booking_activities?on_conflict=qweekle_booking_id",
+        {
+          method: "POST",
+          headers: {
+            apikey: CONFIG.SUPABASE_KEY,
+            Authorization: `Bearer ${CONFIG.SUPABASE_KEY}`,
+            "Content-Type": "application/json",
+            Prefer: "resolution=merge-duplicates",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+    } catch (e) {
+      console.warn("Erreur push custom tables", e);
+    }
+  }
+
+  async syncCustomTablesFromSupabase() {
+    if (typeof CONFIG === "undefined" || !CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_KEY) return;
+
+    try {
+      const url = `${CONFIG.SUPABASE_URL}/rest/v1/booking_activities?select=raw_payload&qweekle_booking_id=eq.GLOBAL_CONFIG_TABLES`;
+      const res = await fetch(url, {
+        headers: {
+          apikey: CONFIG.SUPABASE_KEY,
+          Authorization: `Bearer ${CONFIG.SUPABASE_KEY}`,
+        },
+      });
+      const data = await res.json();
+      if (data && data.length > 0 && data[0].raw_payload && data[0].raw_payload.tables) {
+        if (this.hasLocalStorage()) {
+          localStorage.setItem("SFG_CUSTOM_TABLES", JSON.stringify(data[0].raw_payload.tables));
+        }
+      }
+    } catch (e) {
+      console.warn("Erreur sync custom tables", e);
+    }
+  }
+
   async hideQweekleBooking(bookingId) {
     if (!confirm("Voulez-vous vraiment masquer cette réservation fantôme ? (Utile quand une annulation n'a pas été synchronisée par Qweekle). Elle disparaîtra de l'écran pour tout le monde.")) return;
     
@@ -640,10 +713,11 @@ class AppStateManager {
       };
     }
 
-    // Avant de faire quoi que ce soit, on récupère les notes manuelles partagées
-    // et les alertes emails
+    // 3. Charger le cache, puis rafraîchir en arrière-plan depuis Supabase si configuré
+    this.loadFromCache(dateStr);
     await this.syncEmailAlertsFromSupabase();
     await this.syncOverridesFromSupabase(dateStr);
+    await this.syncCustomTablesFromSupabase();
 
     // 1. Tenter en direct via l'API REST officielle de Qweekle (Priorité 1 absolue maintenant qu'on a le token !)
     if (CONFIG.QWEEKLE_API_TOKEN && CONFIG.QWEEKLE_API_BASE_URL) {

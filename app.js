@@ -1106,11 +1106,13 @@ function renderPlanningAnniversaireA4() {
 
   // Attribution automatique des tables
   let tableAssignments = new Map();
-  if (window.TableAssigner && CONFIG.TABLES) {
+  const currentTablesConfig = appState.getCustomTables() || CONFIG.TABLES;
+  
+  if (window.TableAssigner && currentTablesConfig) {
       reservations.forEach(res => {
           res.manualTable = appState.getQweekleCustomTable(res.id);
       });
-      const assigner = new window.TableAssigner(CONFIG.TABLES);
+      const assigner = new window.TableAssigner(currentTablesConfig);
       tableAssignments = assigner.assign(reservations);
   }
 
@@ -1561,7 +1563,92 @@ window.markEmailAlertAsRead = async function(alertId) {
 // Global functions accessible from HTML onClick attributes
 window.openEventModal = openEventModal;
 window.openPostItModal = openPostItModal;
+// ============================================================================
+// GESTION DE LA CONFIGURATION DES TABLES
+// ============================================================================
+
+function openTableConfigModal() {
+    const tbody = document.getElementById('table-config-body');
+    tbody.innerHTML = '';
+    
+    // Charger les tables actuelles
+    const currentTables = appState.getCustomTables() || CONFIG.TABLES;
+    
+    currentTables.forEach(t => {
+        addTableConfigRow(t);
+    });
+    
+    document.getElementById('table-config-modal').style.display = 'flex';
+}
+
+function addTableConfigRow(table = { id: '', capacity: 10, priority: 2, zone: 'R' }) {
+    const tbody = document.getElementById('table-config-body');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td><input type="text" class="config-id" value="${table.id}" placeholder="Ex: T1" style="width: 100%; padding: 5px;" /></td>
+        <td><input type="number" class="config-cap" value="${table.capacity}" min="1" style="width: 100%; padding: 5px;" /></td>
+        <td><input type="number" class="config-prio" value="${table.priority}" min="1" max="3" style="width: 100%; padding: 5px;" /></td>
+        <td>
+            <select class="config-zone" style="width: 100%; padding: 5px;">
+                <option value="T" ${table.zone === 'T' ? 'selected' : ''}>T</option>
+                <option value="STG" ${table.zone === 'STG' ? 'selected' : ''}>STG</option>
+                <option value="R" ${table.zone === 'R' ? 'selected' : ''}>R</option>
+            </select>
+        </td>
+        <td><button type="button" onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: #e53e3e; cursor: pointer; font-size: 1.2rem;">🗑️</button></td>
+    `;
+    tbody.appendChild(tr);
+}
+
+function resetTableConfig() {
+    if (confirm("Voulez-vous vraiment restaurer les tables par défaut du système ?")) {
+        const tbody = document.getElementById('table-config-body');
+        tbody.innerHTML = '';
+        CONFIG.TABLES.forEach(t => {
+            addTableConfigRow(t);
+        });
+    }
+}
+
+function saveTableConfig() {
+    const tbody = document.getElementById('table-config-body');
+    const rows = tbody.querySelectorAll('tr');
+    const newTables = [];
+    
+    let hasError = false;
+    rows.forEach(tr => {
+        const id = tr.querySelector('.config-id').value.trim();
+        const cap = parseInt(tr.querySelector('.config-cap').value, 10);
+        const prio = parseInt(tr.querySelector('.config-prio').value, 10);
+        const zone = tr.querySelector('.config-zone').value;
+        
+        if (!id) hasError = true;
+        else newTables.push({ id, capacity: cap, priority: prio, zone });
+    });
+    
+    if (hasError) {
+        alert("Certaines tables n'ont pas de nom (ID). Veuillez corriger.");
+        return;
+    }
+    
+    if (newTables.length === 0) {
+        alert("Vous devez avoir au moins une table.");
+        return;
+    }
+    
+    appState.saveCustomTables(newTables);
+    closeModal('table-config-modal');
+    
+    // Rafraîchir l'affichage
+    refreshPlanningData();
+}
+
+// Exposer globalement
 window.closeModal = closeModal;
+window.openTableConfigModal = openTableConfigModal;
+window.addTableConfigRow = addTableConfigRow;
+window.resetTableConfig = resetTableConfig;
+window.saveTableConfig = saveTableConfig;
 window.openEmailAlertsModal = openEmailAlertsModal;
 window.switchTab = switchTab;
 

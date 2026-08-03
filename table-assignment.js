@@ -6,22 +6,45 @@
 class TableAssigner {
     constructor(tablesConfig) {
         this.tables = tablesConfig;
-        this.adjacencies = {
-            "T1": ["T2"],
-            "T2": ["T1", "T3"],
-            "T3": ["T2", "T4"],
-            "T4": ["T3", "T5"],
-            "T5": ["T4", "T6"],
-            "T6": ["T5"],
-            "STG+": ["STG-"],
-            "STG-": ["STG+"],
-            "R1": ["R2", "R3", "R4"],
-            "R2": ["R1", "R3", "R4"],
-            "R3": ["R1", "R2", "R4"],
-            "R4": ["R1", "R2", "R3"]
-        };
+        this.adjacencies = this._generateAdjacencies(tablesConfig);
         // Pré-calcul de toutes les combinaisons valides de tables
         this.validCombinations = this._generateAllCombinations();
+    }
+
+    _generateAdjacencies(tablesConfig) {
+        const adj = {};
+        tablesConfig.forEach(t => adj[t.id] = []);
+
+        // Grouper par zone
+        const zones = {};
+        tablesConfig.forEach(t => {
+            if (!zones[t.zone]) zones[t.zone] = [];
+            zones[t.zone].push(t.id);
+        });
+
+        for (const zone in zones) {
+            const tableIds = zones[zone];
+            if (zone === "T") {
+                // Zone T : adjacence linéaire (en chaîne). 
+                // On trie alphanumériquement (ex: T1, T2, T10)
+                tableIds.sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+                for (let i = 0; i < tableIds.length; i++) {
+                    if (i > 0) adj[tableIds[i]].push(tableIds[i - 1]);
+                    if (i < tableIds.length - 1) adj[tableIds[i]].push(tableIds[i + 1]);
+                }
+            } else {
+                // Autres zones (R, STG, etc.) : entièrement connectées, 
+                // toutes les tables de la zone peuvent être combinées entre elles.
+                for (let i = 0; i < tableIds.length; i++) {
+                    for (let j = 0; j < tableIds.length; j++) {
+                        if (i !== j) {
+                            adj[tableIds[i]].push(tableIds[j]);
+                        }
+                    }
+                }
+            }
+        }
+        return adj;
     }
 
     _generateAllCombinations() {

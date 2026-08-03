@@ -197,9 +197,11 @@
                     <p class="view-subtitle" id="subtitle-anniversaire">Organisation des anniversaires, salles et formules</p>
                 </div>
                 <div style="display: flex; gap: 10px;">
-                    <button type="button" class="btn-sync" onclick="syncQweekleReservations()">⚡ Sync Qweekle</button>
-                    <button type="button" class="btn-add" style="background: #2F855A; border-color: #276749;" onclick="window.print()">🖨️ Imprimer A4</button>
-                </div>
+                    <div class="actions">
+            <button class="btn-primary" onclick="openTableConfigModal()" style="background-color: #F6AD55; color: #7B341E; border: 1px solid #DD6B20; font-weight: 600;">⚙️ Config. Tables</button>
+            <button class="btn-primary" onclick="syncQweekleReservations()">⚡ Sync Qweekle</button>
+            <button class="btn-primary print-hide" id="print-button" onclick="window.print()">🖨️ Imprimer A4</button>
+        </div>        </div>
             </div>
             
             <div class="a4-print-container" id="anniversaire-a4-container">
@@ -533,6 +535,45 @@
             
             <div class="modal-actions" style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px; display: flex; justify-content: flex-end;">
                 <button type="button" class="btn-secondary" onclick="closeModal('email-alerts-modal')">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. FENÊTRE MODALE : CONFIGURATION DES TABLES -->
+    <div id="table-config-modal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 800px; width: 95%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 15px;">
+                <h3 style="color: #2b6cb0; margin: 0; font-size: 1.25rem;">⚙️ Configuration des Tables</h3>
+                <button type="button" onclick="closeModal('table-config-modal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #a0aec0;">×</button>
+            </div>
+            <div style="margin-bottom: 15px; font-size: 0.9rem; color: #4a5568;">
+                <p>Modifiez ici les tables disponibles pour le placement automatique. Les fusions possibles seront déduites automatiquement de la <strong>Zone</strong> (les tables T s'associent en chaîne, STG et R s'associent librement).</p>
+            </div>
+            
+            <div style="max-height: 50vh; overflow-y: auto; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 4px;">
+                <table class="planning-table" style="margin: 0;">
+                    <thead>
+                        <tr>
+                            <th>Nom (ID)</th>
+                            <th>Capacité</th>
+                            <th>Priorité (1=Max)</th>
+                            <th>Zone</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-config-body">
+                        <!-- Lignes injectées par JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <button type="button" class="btn-secondary" onclick="addTableConfigRow()">+ Ajouter une table</button>
+                <button type="button" class="btn-secondary" onclick="resetTableConfig()" style="margin-left: 10px; color: #c53030;">Réinitialiser par défaut</button>
+            </div>
+            
+            <div class="modal-actions" style="border-top: 1px solid #e2e8f0; padding-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn-secondary" onclick="closeModal('table-config-modal')">Annuler</button>
+                <button type="button" class="btn-primary" onclick="saveTableConfig()">💾 Sauvegarder & Rafraîchir</button>
             </div>
         </div>
     </div>
