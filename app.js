@@ -1071,7 +1071,7 @@ function renderPlanningAnniversaireA4() {
   // Filtrer uniquement celles qui sont des "anniversaires" ou "évènements adultes" ou qui ont une "table réservée"
   reservations = reservations.filter(res => {
     const isAnniv = res.categories && res.categories.includes("anniversaire");
-    const isAdult = res.categories && (res.categories.includes("adulte") || res.categories.includes("team building"));
+    const isAdult = res.categories && (res.categories.includes("évènement adulte") || res.categories.includes("team building"));
     const hasTable = res.activites && res.activites.some(a => 
       a.nom.toLowerCase().includes("table réservée") || 
       a.nom.toLowerCase().includes("table reservee")
