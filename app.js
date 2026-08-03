@@ -1158,7 +1158,10 @@ function renderPlanningAnniversaireA4() {
             let searchLbl = "";
             let qty = 1;
 
+            let originalText = "";
+
             if (typeof o === "string") {
+                originalText = o;
                 const qtyMatch = o.match(/^(\d+)\s*x\s*(.*)$/i);
                 if (qtyMatch) {
                     qty = parseInt(qtyMatch[1], 10);
@@ -1169,6 +1172,12 @@ function renderPlanningAnniversaireA4() {
             } else {
                 searchLbl = (o.label || "").toLowerCase();
                 qty = o.qty || 1;
+                originalText = `${qty}x ${o.label}`;
+            }
+            
+            if (isAdult) {
+                opts.adultList = opts.adultList || [];
+                opts.adultList.push(originalText);
             }
 
             if (searchLbl.includes("brownie")) opts.brownie = (opts.brownie || 0) + qty;
@@ -1238,6 +1247,11 @@ function renderPlanningAnniversaireA4() {
         }
     }
     finalCommentaire = finalCommentaire.trim().replace(/\\n/g, "<br>");
+    
+    // Ajout des options pour les évènements adultes
+    if (isAdult && opts.adultList && opts.adultList.length > 0) {
+        finalCommentaire += (finalCommentaire ? "<br><br>" : "") + `<span style="color:#0369a1; font-weight:bold;">Options : ${opts.adultList.join(", ")}</span>`;
+    }
 
     const emailAlerts = appState.hasLocalStorage() ? JSON.parse(localStorage.getItem("SFG_EMAIL_ALERTS_STORE") || "{}") : {};
     const bookingAlerts = emailAlerts[res.id] || [];
