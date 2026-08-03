@@ -1099,16 +1099,6 @@ function renderPlanningAnniversaireA4() {
   reservations.forEach(res => {
       res._heureAffichage = res.heureArrivee || "";
       res._heureFinAffichage = res.heureDepart || "";
-      if (res.activites) {
-          const tableAct = res.activites.find(a => 
-              a.nom.toLowerCase().includes("table réservée") || 
-              a.nom.toLowerCase().includes("table reservee")
-          );
-          if (tableAct && tableAct.heureDebut) {
-              res._heureAffichage = tableAct.heureDebut;
-              res._heureFinAffichage = tableAct.heureFin || res._heureFinAffichage;
-          }
-      }
   });
 
   // Trier par heure d'affichage
@@ -1122,10 +1112,10 @@ function renderPlanningAnniversaireA4() {
     let prenomDisplay = enfantsInfos[0]?.nom || "???";
     let ageDisplay = enfantsInfos[0]?.age || "???";
     
-    // Si vide ou "???", essayer de trouver dans la string enfants si elle existe
-    if (prenomDisplay === "???" && res.enfants && res.enfants.length > 0) {
-        prenomDisplay = res.enfants[0].prenom || "???";
-        let a = res.enfants[0].age;
+    // Si vide ou "???", essayer de trouver dans res.enfantAnniversaire
+    if (prenomDisplay === "???" && res.enfantAnniversaire) {
+        prenomDisplay = res.enfantAnniversaire.prenom || "???";
+        let a = res.enfantAnniversaire.age;
         if (a && a !== "Non précisé" && !isNaN(Number(a))) {
             ageDisplay = Number(a);
         }
