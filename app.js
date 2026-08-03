@@ -1068,12 +1068,15 @@ function renderPlanningAnniversaireA4() {
   // Récupérer et filtrer les réservations Qweekle
   let reservations = appState.getQweekleReservationsForDate(appState.currentDate) || [];
   
-  // Filtrer uniquement celles qui ont une "table réservée" (Anniversaires et Evènements adultes)
+  // Filtrer uniquement celles qui sont des "anniversaires" ou "évènements adultes" ou qui ont une "table réservée"
   reservations = reservations.filter(res => {
-    return res.activites && res.activites.some(a => 
+    const isAnniv = res.categories && res.categories.includes("anniversaire");
+    const isAdult = res.categories && (res.categories.includes("adulte") || res.categories.includes("team building"));
+    const hasTable = res.activites && res.activites.some(a => 
       a.nom.toLowerCase().includes("table réservée") || 
       a.nom.toLowerCase().includes("table reservee")
     );
+    return isAnniv || isAdult || hasTable;
   });
 
   // Déclencher une synchronisation automatique
@@ -1116,16 +1119,31 @@ function renderPlanningAnniversaireA4() {
     const opts = {};
     if (res.options) {
         res.options.forEach(o => {
-            const lbl = (o.label || "").toLowerCase();
-            if (lbl.includes("brownie")) opts.brownie = (opts.brownie || 0) + o.qty;
-            if (lbl.includes("gâteau de crêpe") || lbl.includes("gateau de crepe") || (lbl.includes("gâteau") && lbl.includes("crêpe"))) opts.gateauCrepes = (opts.gateauCrepes || 0) + o.qty;
-            if (lbl.includes("donut")) opts.donuts = (opts.donuts || 0) + o.qty;
-            if (lbl.includes("bonbon")) opts.bonbons = (opts.bonbons || 0) + o.qty;
-            if (lbl.includes("kidibul")) opts.kidibul = (opts.kidibul || 0) + o.qty;
-            if (lbl.includes("chips")) opts.chips = (opts.chips || 0) + o.qty;
-            if (lbl === "crêpe(s)" || (lbl.includes("crêpe") && !lbl.includes("gâteau"))) opts.crepes = (opts.crepes || 0) + o.qty;
-            if (lbl.includes("granité 200") || lbl.includes("granite 200") || lbl.includes("petit granité")) opts.granite200 = (opts.granite200 || 0) + o.qty;
-            if (lbl.includes("granité 350") || lbl.includes("granite 350") || lbl.includes("grand granité")) opts.granite350 = (opts.granite350 || 0) + o.qty;
+            let searchLbl = "";
+            let qty = 1;
+
+            if (typeof o === "string") {
+                const qtyMatch = o.match(/^(\d+)\s*x\s*(.*)$/i);
+                if (qtyMatch) {
+                    qty = parseInt(qtyMatch[1], 10);
+                    searchLbl = qtyMatch[2].toLowerCase();
+                } else {
+                    searchLbl = o.toLowerCase();
+                }
+            } else {
+                searchLbl = (o.label || "").toLowerCase();
+                qty = o.qty || 1;
+            }
+
+            if (searchLbl.includes("brownie")) opts.brownie = (opts.brownie || 0) + qty;
+            if (searchLbl.includes("gâteau de crêpe") || searchLbl.includes("gateau de crepe") || (searchLbl.includes("gâteau") && searchLbl.includes("crêpe"))) opts.gateauCrepes = (opts.gateauCrepes || 0) + qty;
+            if (searchLbl.includes("donut")) opts.donuts = (opts.donuts || 0) + qty;
+            if (searchLbl.includes("bonbon")) opts.bonbons = (opts.bonbons || 0) + qty;
+            if (searchLbl.includes("kidibul")) opts.kidibul = (opts.kidibul || 0) + qty;
+            if (searchLbl.includes("chips")) opts.chips = (opts.chips || 0) + qty;
+            if (searchLbl === "crêpe(s)" || (searchLbl.includes("crêpe") && !searchLbl.includes("gâteau"))) opts.crepes = (opts.crepes || 0) + qty;
+            if (searchLbl.includes("granité 200") || searchLbl.includes("granite 200") || searchLbl.includes("petit granité")) opts.granite200 = (opts.granite200 || 0) + qty;
+            if (searchLbl.includes("granité 350") || searchLbl.includes("granite 350") || searchLbl.includes("grand granité")) opts.granite350 = (opts.granite350 || 0) + qty;
         });
     }
 
