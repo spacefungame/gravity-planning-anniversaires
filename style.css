@@ -1435,45 +1435,61 @@ body {
 
 .a4-anniv-banner {
     display: flex;
-    font-weight: bold;
+    font-weight: 600;
     font-size: 1.1rem;
-    border: 1px solid #000;
+    border: 2px solid #2D3748; /* Slate-800 */
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    overflow: hidden;
 }
 
 .a4-anniv-date {
-    background: #FBB6CE; /* Magenta doux / pastel */
-    color: #000;
-    padding: 6px 12px;
-    width: 20%;
+    background: #EBF4FF; /* Blue-100 */
+    color: #2B6CB0; /* Blue-600 */
+    padding: 10px 16px;
+    width: 22%;
     text-align: center;
-    border-right: 1px solid #000;
+    border-right: 2px solid #2D3748;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .a4-anniv-warning {
-    background: #FEFCBF; /* Jaune doux / pastel */
-    color: #000;
-    padding: 6px 12px;
+    background: #FFFFF0; /* Yellow-50 */
+    color: #975A16; /* Yellow-700 */
+    padding: 10px 16px;
     flex: 1;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .a4-planning-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.75rem; /* Ultra dense */
+    font-size: 0.8rem;
+    border: 2px solid #2D3748;
 }
 
 .a4-planning-table th, .a4-planning-table td {
-    border: 1px solid #000;
-    padding: 4px;
+    border: 1px solid #CBD5E0; /* Slate-300 */
+    padding: 6px 4px;
     text-align: center;
     vertical-align: middle;
 }
 
 .a4-planning-table thead th {
-    background-color: #E2E8F0; /* Bleu-gris doux au lieu du cyan pétant */
-    color: #000;
-    font-weight: bold;
+    background-color: #F7FAFC; /* Slate-50 */
+    color: #4A5568; /* Slate-600 */
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.02em;
+    border-bottom: 2px solid #2D3748;
 }
 
 .a4-planning-table th.col-rot > div {
@@ -1493,12 +1509,12 @@ body {
     height: 35px;
 }
 
-/* Couleurs spécifiques colonnes / background doux pastel */
-.bg-orange { background-color: #FBD38D !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.bg-pink { background-color: #FBB6CE !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.bg-blue { background-color: #90CDF4 !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.bg-red { background-color: #FEB2B2 !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.bg-yellow { background-color: #FEFCBF !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+/* Couleurs spécifiques colonnes / background doux pastel Premium */
+.bg-orange { background-color: #FEEBC8 !important; color: #C05621 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: 600; }
+.bg-pink { background-color: #FED7E2 !important; color: #B83280 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: 600; }
+.bg-blue { background-color: #EBF8FF !important; color: #2B6CB0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: 600; }
+.bg-red { background-color: #FED7D7 !important; color: #C53030 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: 600; }
+.bg-yellow { background-color: #FEFCBF !important; color: #975A16 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: 600; }
 
 /* Impression du tableau A4 paysage */
 @media print {
@@ -1537,19 +1553,22 @@ body {
     }
     
     .a4-planning-table th {
-        background-color: #00FFFF !important;
+        background-color: #F7FAFC !important;
+        color: #4A5568 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
 
     .a4-anniv-date {
-        background-color: #ff00ff !important;
+        background-color: #EBF4FF !important;
+        color: #2B6CB0 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
 
     .a4-anniv-warning {
-        background-color: #ffff00 !important;
+        background-color: #FFFFF0 !important;
+        color: #975A16 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
