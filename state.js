@@ -1283,6 +1283,7 @@ class AppStateManager {
           nbPersonnes ||
           1;
         return {
+          id: `QW-${act.qweekle_booking_id || act.id}`,
           heureDebut: s.toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
