@@ -406,6 +406,55 @@ class AppStateManager {
   }
 
   // =========================================================================
+  // GESTION ET SYNCHRONISATION DES ALERTES EMAILS (SUPABASE)
+  // =========================================================================
+  async syncEmailAlertsFromSupabase() {
+    if (
+      typeof CONFIG === "undefined" ||
+      !CONFIG.SUPABASE_URL ||
+      !CONFIG.SUPABASE_KEY
+    )
+      return;
+    try {
+      // On récupère toutes les alertes non résolues (ou liées à des réservations récentes)
+      // Pour simplifier, on prend celles dont le status n'est pas 'resolved'
+      const url = `${CONFIG.SUPABASE_URL}/rest/v1/email_alerts?status=eq.unread`;
+      const res = await fetch(url, {
+        headers: {
+          apikey: CONFIG.SUPABASE_KEY,
+          Authorization: `Bearer ${CONFIG.SUPABASE_KEY}`,
+          Accept: "application/json",
+        },
+      });
+      if (!res.ok) return;
+      const rows = await res.json();
+
+      const store = {};
+      rows.forEach((r) => {
+        if (r.qweekle_booking_id) {
+          if (!store[r.qweekle_booking_id]) {
+            store[r.qweekle_booking_id] = [];
+          }
+          store[r.qweekle_booking_id].push(r);
+        }
+      });
+
+      if (this.hasLocalStorage()) {
+        localStorage.setItem("SFG_EMAIL_ALERTS_STORE", JSON.stringify(store));
+      }
+    } catch (e) {
+      console.warn("Erreur sync email alerts", e);
+    }
+  }
+
+  getEmailAlerts(bookingId) {
+    const store = this.hasLocalStorage()
+      ? JSON.parse(localStorage.getItem("SFG_EMAIL_ALERTS_STORE") || "{}")
+      : {};
+    return store[bookingId] || [];
+  }
+
+  // =========================================================================
   // GESTION ET SYNCHRONISATION DE L'API QWEEKLE
   // =========================================================================
   getQweekleReservationsForDate(dateStr) {
@@ -493,6 +542,8 @@ class AppStateManager {
     }
 
     // Avant de faire quoi que ce soit, on récupère les notes manuelles partagées
+    // et les alertes emails
+    await this.syncEmailAlertsFromSupabase();
     await this.syncOverridesFromSupabase(dateStr);
 
     // 1. Tenter en direct via l'API REST officielle de Qweekle (Priorité 1 absolue maintenant qu'on a le token !)

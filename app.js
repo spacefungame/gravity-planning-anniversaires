@@ -778,8 +778,16 @@ function renderPlanningComplet(filterCategory = currentQweekleCategoryFilter) {
       })
       .join(" + ");
 
+    // Récupération des alertes emails
+    const emailAlerts = appState.getEmailAlerts(res.id);
+    const hasAlerts = emailAlerts && emailAlerts.length > 0;
+
     // Génération des badges de catégories mis en évidence
     let badgesHtml = "";
+    if (hasAlerts) {
+      badgesHtml += `<span class="qweekle-badge email-alert-badge" style="background: #ef4444; color: white; font-weight: bold; border-color: #dc2626; animation: pulse 2s infinite;" title="Une modification a été demandée par email !">📩 Alerte Email</span>`;
+    }
+
     if (res.categories && res.categories.length > 0) {
       res.categories.forEach((cat) => {
         const badgeInfo = catBadgesMap[cat] || {
@@ -789,7 +797,7 @@ function renderPlanningComplet(filterCategory = currentQweekleCategoryFilter) {
         badgesHtml += `<span class="qweekle-badge ${badgeInfo.className}">${badgeInfo.label}</span>`;
       });
     } else {
-      badgesHtml = `<span class="qweekle-badge badge-adulte">👨 Adulte (+18 ans)</span>`;
+      badgesHtml += `<span class="qweekle-badge badge-adulte">👨 Adulte (+18 ans)</span>`;
     }
 
     // Génération de la chronologie des activités (Si plusieurs occurrences, les afficher en bandeaux horizontaux ultra compacts)
@@ -962,6 +970,20 @@ function renderPlanningComplet(filterCategory = currentQweekleCategoryFilter) {
                         style="width: 100%; min-height: 44px; border: 1px solid var(--border-soft); border-radius: 4px; padding: 6px 8px; font-size: 0.85rem; font-family: inherit; background: var(--bg-main); color: var(--text-main); resize: vertical; line-height: 1.4;"
                     >${appState.getQweekleCustomNote(res.id) || ""}</textarea>
                 </div>
+                ${
+                  hasAlerts
+                    ? `
+                <div class="email-alerts-container" style="margin-top: 10px; background: rgba(239, 68, 68, 0.05); border-left: 3px solid #ef4444; padding: 8px 12px; border-radius: 4px;">
+                    <div style="font-size: 0.85rem; font-weight: bold; color: #ef4444; margin-bottom: 6px;">📩 Changements détectés par email :</div>
+                    ${emailAlerts.map(alert => `
+                        <div style="font-size: 0.8rem; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(239, 68, 68, 0.1);">
+                            <strong style="color: var(--text-main); display: block; margin-bottom: 2px;">Objet : ${alert.email_subject || 'Email'}</strong>
+                            <span style="color: var(--text-muted);">${(alert.detected_changes || "").replace(/\n/g, '<br/>')}</span>
+                        </div>
+                    `).join('')}
+                </div>`
+                    : ""
+                }
             </div>
         `;
 
