@@ -217,7 +217,9 @@ class TableAssigner {
 
             if (a.priority !== b.priority) return a.priority - b.priority;
 
-            return a.capacity - b.capacity;
+            // 4. Capacité (DESCENDANT) : Les plus grands groupes (traités en premier) 
+            // prendront les plus grandes tables de la zone pour avoir plus d'espace.
+            return b.capacity - a.capacity;
         });
 
         return candidates[0];
