@@ -198,6 +198,30 @@ class AppStateManager {
   }
 
   // =========================================================================
+  // GESTION DES NOTES MANUELLES QWEEKLE
+  // =========================================================================
+  getQweekleCustomNote(bookingId) {
+    const store = this.hasLocalStorage()
+      ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_NOTES_STORE") || "{}")
+      : {};
+    return store[bookingId] || "";
+  }
+
+  saveQweekleCustomNote(bookingId, noteText) {
+    const store = this.hasLocalStorage()
+      ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_NOTES_STORE") || "{}")
+      : {};
+    if (noteText && noteText.trim() !== "") {
+      store[bookingId] = noteText.trim();
+    } else {
+      delete store[bookingId];
+    }
+    if (this.hasLocalStorage()) {
+      localStorage.setItem("SFG_QWEEKLE_NOTES_STORE", JSON.stringify(store));
+    }
+  }
+
+  // =========================================================================
   // GESTION ET SYNCHRONISATION DE L'API QWEEKLE
   // =========================================================================
   getQweekleReservationsForDate(dateStr) {
@@ -664,18 +688,43 @@ class AppStateManager {
       // Tri chronologique des activités au sein du dossier
       group.sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
 
-      // 1. Informations Client
+      // 1. Informations Client et Notes
       let nom = "Client Inconnu";
       let prenom = "";
       let societe = "";
+      let qweekleNote = "";
+      let qweekleInternalNote = "";
 
       for (const act of group) {
-        const fn =
-          act.client_firstname || act.raw_payload?.client?.firstname || "";
-        const ln =
-          act.client_lastname || act.raw_payload?.client?.lastname || "";
-        const soc = act.raw_payload?.client?.society || "";
-        const clientType = act.raw_payload?.client?.type || "";
+        const rp = act.raw_payload || {};
+        const cl = rp.client || {};
+        const o = rp.order || {};
+
+        if (!qweekleNote) {
+          qweekleNote =
+            o.note ||
+            o.comment ||
+            rp.note ||
+            rp.comment ||
+            act.note ||
+            act.comment ||
+            "";
+        }
+        if (!qweekleInternalNote) {
+          qweekleInternalNote =
+            o.internal_note ||
+            rp.internal_note ||
+            act.internal_note ||
+            cl.note ||
+            cl.internal_note ||
+            cl.comment ||
+            "";
+        }
+
+        const fn = act.client_firstname || cl.firstname || "";
+        const ln = act.client_lastname || cl.lastname || "";
+        const soc = cl.society || "";
+        const clientType = cl.type || "";
 
         if (fn || ln || soc) {
           prenom = fn;
@@ -1155,6 +1204,8 @@ class AppStateManager {
         enfantAnniversaire,
         activites,
         options,
+        qweekleNote,
+        qweekleInternalNote,
       });
     });
 
