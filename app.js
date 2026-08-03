@@ -787,6 +787,12 @@ function renderPlanningComplet(filterCategory = currentQweekleCategoryFilter) {
     if (hasAlerts) {
       badgesHtml += `<span class="qweekle-badge email-alert-badge" style="background: #ef4444; color: white; font-weight: bold; border-color: #dc2626; animation: pulse 2s infinite;" title="Une modification a été demandée par email !">📩 Alerte Email</span>`;
     }
+    
+    // DEEEEP DEBUG
+    const storeDebug = JSON.parse(localStorage.getItem("SFG_EMAIL_ALERTS_STORE") || "{}");
+    const actIdsDebug = (res.activites || []).map(a => a.id).join(',');
+    badgesHtml += `<span class="qweekle-badge" style="background: #333; color: #fff; font-size: 0.6rem;">ID: ${res.id} | Acts: ${actIdsDebug} | StoreKeys: ${Object.keys(storeDebug).length} | AlertsCount: ${emailAlerts.length}</span>`;
+
     if (res.categories && res.categories.length > 0) {
       res.categories.forEach((cat) => {
         const badgeInfo = catBadgesMap[cat] || {
