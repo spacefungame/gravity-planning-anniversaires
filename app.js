@@ -1107,6 +1107,9 @@ function renderPlanningAnniversaireA4() {
   // Attribution automatique des tables
   let tableAssignments = new Map();
   if (window.TableAssigner && CONFIG.TABLES) {
+      reservations.forEach(res => {
+          res.manualTable = appState.getQweekleCustomTable(res.id);
+      });
       const assigner = new window.TableAssigner(CONFIG.TABLES);
       tableAssignments = assigner.assign(reservations);
   }

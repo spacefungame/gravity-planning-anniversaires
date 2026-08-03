@@ -119,10 +119,36 @@ class TableAssigner {
         const assignmentsMap = new Map();
         const timeline = []; 
 
-        // On trie d'abord par taille de groupe décroissante (les plus grands d'abord)
+        // 1. On place d'abord toutes les réservations manuelles dans la timeline
+        // pour bloquer ces tables et empêcher l'algorithme de les utiliser
+        reservations.forEach(res => {
+            if (res.manualTable) {
+                const fullStart = this._timeToMinutes(res.heureArrivee);
+                const fullEnd = this._timeToMinutes(res.heureDepart);
+                // On peut avoir plusieurs tables séparées par un "+"
+                const tables = res.manualTable.split("+").map(t => t.trim()).filter(t => t);
+                
+                if (tables.length > 0) {
+                    timeline.push({
+                        start: fullStart,
+                        end: fullEnd,
+                        tables: tables
+                    });
+                    assignmentsMap.set(res.id, {
+                        tables: tables,
+                        reducedTime: false
+                    });
+                }
+            }
+        });
+
+        // 2. On filtre les réservations qui n'ont pas d'attribution manuelle
+        const autoReservations = reservations.filter(res => !res.manualTable);
+
+        // 3. On trie les réservations automatiques par taille de groupe décroissante
         // pour s'assurer qu'ils obtiennent les grandes tables simples avant les petits groupes.
         // En cas d'égalité, on trie chronologiquement.
-        const sortedRes = [...reservations].sort((a, b) => {
+        const sortedRes = [...autoReservations].sort((a, b) => {
             const aNb = Number(a.nbPersonnes) || 0;
             const bNb = Number(b.nbPersonnes) || 0;
             if (aNb !== bNb) {
