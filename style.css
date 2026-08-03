@@ -1435,7 +1435,6 @@ body {
 
 .a4-anniv-banner {
     display: flex;
-    font-family: sans-serif;
     font-weight: bold;
     font-size: 1.1rem;
     border: 1px solid #000;
@@ -1462,7 +1461,6 @@ body {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.75rem; /* Ultra dense */
-    font-family: sans-serif;
 }
 
 .a4-planning-table th, .a4-planning-table td {
