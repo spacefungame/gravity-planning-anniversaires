@@ -267,7 +267,12 @@ class AppStateManager {
       lower.includes("capri") ||
       lower.includes("café") ||
       lower.includes("cafe") ||
-      lower.includes("nourriture")
+      lower.includes("nourriture") ||
+      lower.includes("buffet") ||
+      lower.includes("privatisation") ||
+      lower.includes("ticket") ||
+      lower.includes("repas") ||
+      lower.includes("traiteur")
     );
   }
 
@@ -958,6 +963,12 @@ class AppStateManager {
         else if (cleanLower.includes("bonbon")) clean = "Bonbons";
         else if (cleanLower.includes("nourriture externe"))
           clean = "Frais Nourriture Externe";
+        else if (cleanLower.includes("ticket boisson"))
+          clean = "Ticket boisson";
+        else if (cleanLower.includes("buffet libanais"))
+          clean = "Buffet Libanais";
+        else if (cleanLower.includes("buffet") && clean.includes("("))
+          clean = clean.split("(")[0].trim();
 
         const existingQty = optionsMap.get(clean) || 0;
         const newQty = Number(qtyRaw) || 1;
