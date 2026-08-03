@@ -1057,6 +1057,14 @@ class AppStateManager {
         let clean = this.cleanLabel(lblRaw.trim());
         const cleanLower = clean.toLowerCase();
 
+        if (
+          cleanLower.includes("acompte") ||
+          cleanLower.includes("déduction") ||
+          cleanLower.includes("deduction")
+        ) {
+          return;
+        }
+
         if (cleanLower.includes("brownie")) clean = "Brownie";
         else if (cleanLower.includes("crêpe")) clean = "Crêpe(s)";
         else if (cleanLower.includes("bonbon")) clean = "Bonbons";
