@@ -879,11 +879,17 @@ class AppStateManager {
     // Filtrer par date locale du dossier OU conserver si la ligne est une option rattachée à un order_id de ce jour
     const filteredRows = (rows || []).filter((r) => {
       // 1. Filtrer les réservations annulées/supprimées
+      if (r.deleted_at !== null && r.deleted_at !== undefined) return false;
+      if (r.raw_payload && r.raw_payload.deleted_at !== null && r.raw_payload.deleted_at !== undefined) return false;
+      if (r.state === "CANCELLED" || r.state === "CANCELED" || r.state === "DELETED") return false;
+
       const gStatus = (
         r.global_status ||
         r.raw_payload?.order?.global_status ||
         r.raw_payload?.global_status ||
         r.raw_payload?.order_item?.global_status ||
+        r.state ||
+        r.raw_payload?.state ||
         ""
       ).toUpperCase();
       
