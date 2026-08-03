@@ -466,10 +466,14 @@ class AppStateManager {
     // On vérifie donc tous les IDs techniques des activités de cette commande.
     if (booking.activites && booking.activites.length > 0) {
       booking.activites.forEach(act => {
-        const actId = (act.id || "").replace(/^QW-/, "");
-        if (actId !== cleanBookingId && store[actId]) {
-           allAlerts = allAlerts.concat(store[actId]);
-        }
+        const actIdsStr = act.id || "";
+        const actIdsArray = actIdsStr.split(',');
+        actIdsArray.forEach(idStr => {
+          const actId = idStr.trim().replace(/^QW-/, "");
+          if (actId && actId !== cleanBookingId && store[actId]) {
+             allAlerts = allAlerts.concat(store[actId]);
+          }
+        });
       });
     }
     
@@ -2083,6 +2087,7 @@ class AppStateManager {
           heureFin: hFin,
           zone: zone,
           noms: [(act.nom || "").trim()],
+          ids: act.id ? [act.id] : [],
           nbPersonnes: Number(act.nbPersonnes) || Number(fallbackQty) || 1,
         });
       } else {
@@ -2090,6 +2095,9 @@ class AppStateManager {
         const cleanNom = (act.nom || "").trim();
         if (!existing.noms.includes(cleanNom)) {
           existing.noms.push(cleanNom);
+        }
+        if (act.id && !existing.ids.includes(act.id)) {
+          existing.ids.push(act.id);
         }
         existing.nbPersonnes =
           (Number(existing.nbPersonnes) || 0) +
@@ -2131,6 +2139,7 @@ class AppStateManager {
         }
       }
       result.push({
+        id: item.ids && item.ids.length > 0 ? item.ids.join(',') : undefined,
         heureDebut: item.heureDebut,
         heureFin: item.heureFin,
         zone: item.zone,
