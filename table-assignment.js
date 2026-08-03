@@ -185,19 +185,32 @@ class TableAssigner {
 
         if (candidates.length === 0) return null;
 
-        // Tri: Priorité d'abord, puis capacité
+        const getReuseCount = (combo) => {
+            let count = 0;
+            combo.tables.forEach(t => {
+                count += currentAssignments.filter(assign => assign.tables.includes(t)).length;
+            });
+            return count;
+        };
+
+        // Tri: 
+        // 1. Éviter la réutilisation de tables (ceux avec le moins de réutilisations d'abord)
+        // 2. Priorité (1 = meilleur)
+        // 3. Préférence pour une table simple plutôt qu'une fusion (si capacité suffisante)
+        // 4. Capacité (minimiser le gâchis)
         candidates.sort((a, b) => {
+            const reuseA = getReuseCount(a);
+            const reuseB = getReuseCount(b);
+            if (reuseA !== reuseB) return reuseA - reuseB;
+
             if (a.priority !== b.priority) return a.priority - b.priority;
             
-            // Priorité à la table simple si possible, pour limiter les grandes fusions
             if (a.isSingle && !b.isSingle && a.capacity >= nbPersons) return -1;
             if (!a.isSingle && b.isSingle && b.capacity >= nbPersons) return 1;
 
             return a.capacity - b.capacity;
         });
 
-        // Pour éviter les rotations rapides, on pourrait ici filtrer/trier selon currentAssignments,
-        // mais le tri par capacité assure déjà de ne pas "gâcher" une grande table.
         return candidates[0];
     }
 }
