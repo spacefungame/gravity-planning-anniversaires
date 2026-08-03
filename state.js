@@ -1378,7 +1378,17 @@ class AppStateManager {
             ),
         );
 
-        if (distinctActTypes.size > orderPacks.size && orderPacks.size === 1) {
+        const isGeneric = (str) => {
+          const l = (str || "").toLowerCase();
+          return l.includes("sur mesure") || 
+                 l.includes("multi-activité") || 
+                 l.includes("multi activité") || 
+                 l.includes("qweekle") ||
+                 l.includes("pack");
+        };
+
+        // Si le nom du pack est très générique, on le recompose à partir des activités
+        if (isGeneric(originalPackStr) && distinctActTypes.size > orderPacks.size && orderPacks.size === 1) {
           nomPack = this.computePackLabelFromActivities(group, originalPackStr);
         } else {
           nomPack = originalPackStr;
@@ -1399,7 +1409,20 @@ class AppStateManager {
             .join(" + ");
         }
 
-        nomPack = this.computePackLabelFromActivities(group, parentOrderLabel);
+        const isGeneric = (str) => {
+          const l = (str || "").toLowerCase();
+          return !l || l.includes("sur mesure") || 
+                 l.includes("multi-activité") || 
+                 l.includes("multi activité") || 
+                 l.includes("qweekle") ||
+                 l.includes("pack");
+        };
+
+        if (isGeneric(parentOrderLabel)) {
+          nomPack = this.computePackLabelFromActivities(group, parentOrderLabel);
+        } else {
+          nomPack = parentOrderLabel;
+        }
       }
 
       // --- NOUVEAU : Nettoyage GARANTI de originalPackStr et nomPack ---
