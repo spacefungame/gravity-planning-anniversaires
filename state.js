@@ -540,7 +540,12 @@ class AppStateManager {
 
   cleanLabel(text) {
     if (!text || typeof text !== "string") return text;
-    return text.replace(/\[.*?\]\s*/g, "").trim();
+    let clean = text.replace(/\[.*?\]\s*/g, "").trim();
+    const matchQty = clean.match(/^(\d+)\s*[xX]\s*(.+)$/);
+    if (matchQty) {
+      clean = matchQty[2].trim();
+    }
+    return clean;
   }
 
   isOptionLabel(text) {
@@ -1329,7 +1334,7 @@ class AppStateManager {
         const typeRaw = (rp.type || act.type || "").toUpperCase();
 
         // Si c'est un produit injecté qui représente le pack principal
-        if ((typeRaw === "PACK" || typeRaw === "PRODUCT") && !act.start_at) {
+        if (!act.start_at && typeRaw !== "OPTION" && typeRaw !== "DEPOSIT") {
           const lbl = this.cleanLabel(
             (rp.label || act.label || act.nom || "").trim(),
           );
