@@ -708,7 +708,8 @@ class AppStateManager {
           typeRaw !== "PACK" &&
           typeRaw !== "DEPOSIT" &&
           typeRaw !== "PAID_DEPOSIT" &&
-          typeRaw !== "FEE"
+          typeRaw !== "FEE" &&
+          a.start_at // Doit avoir une heure de début planifiée
         );
       });
       const activitiesForSchedule =
@@ -946,6 +947,24 @@ class AppStateManager {
 
       // 7. Options supplémentaires choisies (accumuler les quantités, ignorer les packs/activités)
       const optionsMap = new Map();
+
+      const addOption = (lblRaw, qtyRaw) => {
+        if (!lblRaw) return;
+        let clean = this.cleanLabel(lblRaw.trim());
+        const cleanLower = clean.toLowerCase();
+
+        if (cleanLower.includes("brownie")) clean = "Brownie";
+        else if (cleanLower.includes("crêpe")) clean = "Crêpe(s)";
+        else if (cleanLower.includes("bonbon")) clean = "Bonbons";
+        else if (cleanLower.includes("nourriture externe"))
+          clean = "Frais Nourriture Externe";
+
+        const existingQty = optionsMap.get(clean) || 0;
+        const newQty = Number(qtyRaw) || 1;
+        // On prend le MAX pour éviter de compter en double si l'option vient de plusieurs sources (ex: item injecté + raw_payload)
+        optionsMap.set(clean, Math.max(existingQty, newQty));
+      };
+
       group.forEach((act) => {
         const catLower = (act.category || "").toLowerCase();
         const lbl = (act.label || "").trim();
@@ -986,9 +1005,7 @@ class AppStateManager {
             !act.start_at
           ) {
             if (lbl) {
-              const existingQty = optionsMap.get(lbl) || 0;
-              const itemQty = Number(act.qty) || 1;
-              optionsMap.set(lbl, existingQty + itemQty);
+              addOption(lbl, act.qty);
             }
           }
         }
@@ -1017,9 +1034,7 @@ class AppStateManager {
                     oi.category?.toLowerCase().includes("produit") ||
                     !oi.start_at)
                 ) {
-                  const exQty = optionsMap.get(oiLabel) || 0;
-                  const oiQty = Number(oi.qty) || 1;
-                  optionsMap.set(oiLabel, exQty + oiQty);
+                  addOption(oiLabel, oi.qty);
                 }
               });
             }
@@ -1033,20 +1048,7 @@ class AppStateManager {
       });
 
       const options = Array.from(optionsMap.entries()).map(([label, qty]) => {
-        let cleanLabel = this.cleanLabel(label);
-        if (cleanLabel.toLowerCase().includes("brownie")) {
-          cleanLabel = "Brownie";
-        }
-        if (cleanLabel.toLowerCase().includes("crêpe")) {
-          cleanLabel = "Crêpe(s)";
-        }
-        if (cleanLabel.toLowerCase().includes("bonbon")) {
-          cleanLabel = "Bonbons";
-        }
-        if (cleanLabel.toLowerCase().includes("nourriture externe")) {
-          cleanLabel = "Frais Nourriture Externe";
-        }
-        return `${qty} x ${cleanLabel}`;
+        return `${qty} x ${label}`;
       });
       // 8. Sous-compte enfant anniversaire (si réservation anniversaire)
       let enfantAnniversaire = null;
