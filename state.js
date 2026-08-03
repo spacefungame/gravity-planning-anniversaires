@@ -482,11 +482,18 @@ class AppStateManager {
               b.order_item?.order?.client_id ||
               b.order?.client_id;
             const clientData = clientsMap[cid] || {};
+            const orderData = ordersMap[orderId] || {};
 
             // Recréer le payload pour leurrer parseSupabaseActivitiesToBookings
             const fakePayload = {
               ...b,
+              order: {
+                ...b.order,
+                ...orderData,
+              },
               client: {
+                ...b.client,
+                ...clientData,
                 firstname:
                   clientData.firstname || b.client?.firstname || "Client",
                 lastname:
@@ -595,6 +602,46 @@ class AppStateManager {
                 e.message,
               );
             }
+
+            // --- NOUVEAU : Récupérer les notes depuis l'API Qweekle pour ces commandes ---
+            if (CONFIG.QWEEKLE_API_TOKEN && CONFIG.QWEEKLE_API_BASE_URL) {
+              try {
+                const orderPromises = activeOrderIds.map((oid) =>
+                  fetch(`${CONFIG.QWEEKLE_API_BASE_URL}/orders/${oid}`, {
+                    headers: CONFIG.getQweekleHeaders(),
+                  })
+                    .then((r) => (r.ok ? r.json() : null))
+                    .then((data) =>
+                      data && data.data
+                        ? { id: oid, orderData: data.data }
+                        : null,
+                    )
+                    .catch(() => null),
+                );
+                const ordersResults = await Promise.all(orderPromises);
+                const ordersExtraMap = new Map();
+                ordersResults.forEach((res) => {
+                  if (res) ordersExtraMap.set(res.id, res.orderData);
+                });
+
+                rows.forEach((r) => {
+                  if (r.order_id && ordersExtraMap.has(r.order_id)) {
+                    const o = ordersExtraMap.get(r.order_id);
+                    if (!r.raw_payload) r.raw_payload = {};
+                    if (!r.raw_payload.order) r.raw_payload.order = {};
+                    r.raw_payload.order.note = o.note || o.comment || null;
+                    r.raw_payload.order.front_note =
+                      o.front_note || o.internal_note || null;
+                  }
+                });
+              } catch (e) {
+                console.warn(
+                  "⚠️ Erreur lors de la récupération des notes commandes :",
+                  e,
+                );
+              }
+            }
+            // --- FIN RECUPERATION NOTES ---
           }
 
           const parsedList = this.parseSupabaseActivitiesToBookings(
@@ -702,10 +749,13 @@ class AppStateManager {
 
         if (!qweekleNote) {
           qweekleNote =
+            o.front_note ||
             o.note ||
             o.comment ||
+            rp.front_note ||
             rp.note ||
             rp.comment ||
+            act.front_note ||
             act.note ||
             act.comment ||
             "";
