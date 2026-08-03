@@ -763,7 +763,7 @@ function renderLaserPlanning() {
       for (let i = 0; i < maxCols; i++) {
           if (i < groups.length) {
               const g = groups[i];
-              const bg = g.isAnniv ? "background-color: #FFFF00; font-weight: bold;" : "";
+              const bg = g.isAnniv ? "background-color: #FFFF00; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;" : "";
               trHtml += `<td style="${bg} border-left: 1px solid #000; border-bottom: 1px solid #000; padding: 1px 4px; font-size: 0.8rem;">${g.nom}</td>`;
               trHtml += `<td style="${bg} text-align: center; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 1px 2px; font-size: 0.85rem;">${g.nb > 0 ? g.nb : ''}</td>`;
           } else {
@@ -772,8 +772,8 @@ function renderLaserPlanning() {
       }
       
       // Totaux
-      const warningTotal = total > 30 ? "background-color: #F56565; color: white; font-weight: bold;" : "";
-      const warningDispo = dispo < 0 ? "background-color: #F56565; color: white; font-weight: bold;" : "";
+      const warningTotal = total > 30 ? "background-color: #F56565; color: white; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;" : "";
+      const warningDispo = dispo < 0 ? "background-color: #F56565; color: white; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;" : "";
       trHtml += `<td style="text-align: center; font-weight: bold; border: 1px solid #000; padding: 1px 2px; font-size: 0.85rem; ${warningTotal}">${total}</td>`;
       trHtml += `<td style="text-align: center; font-weight: bold; border: 1px solid #000; padding: 1px 2px; font-size: 0.85rem; ${warningDispo}">${dispo}</td>`;
       
