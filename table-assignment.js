@@ -119,7 +119,15 @@ class TableAssigner {
         const assignmentsMap = new Map();
         const timeline = []; 
 
+        // On trie d'abord par taille de groupe décroissante (les plus grands d'abord)
+        // pour s'assurer qu'ils obtiennent les grandes tables simples avant les petits groupes.
+        // En cas d'égalité, on trie chronologiquement.
         const sortedRes = [...reservations].sort((a, b) => {
+            const aNb = Number(a.nbPersonnes) || 0;
+            const bNb = Number(b.nbPersonnes) || 0;
+            if (aNb !== bNb) {
+                return bNb - aNb;
+            }
             const aStart = this._timeToMinutes(a.heureArrivee);
             const bStart = this._timeToMinutes(b.heureArrivee);
             return aStart - bStart;
