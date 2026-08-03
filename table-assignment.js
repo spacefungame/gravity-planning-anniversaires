@@ -195,18 +195,19 @@ class TableAssigner {
 
         // Tri: 
         // 1. Éviter la réutilisation de tables (ceux avec le moins de réutilisations d'abord)
-        // 2. Priorité (1 = meilleur)
-        // 3. Préférence pour une table simple plutôt qu'une fusion (si capacité suffisante)
+        // 2. Préférence ABSOLUE pour une table simple plutôt qu'une fusion (si capacité suffisante)
+        // 3. Priorité (1 = meilleur : STG > R > T)
         // 4. Capacité (minimiser le gâchis)
         candidates.sort((a, b) => {
             const reuseA = getReuseCount(a);
             const reuseB = getReuseCount(b);
             if (reuseA !== reuseB) return reuseA - reuseB;
 
+            // Une table simple gagne toujours contre une fusion (évite de bouger les tables)
+            if (a.isSingle && !b.isSingle) return -1;
+            if (!a.isSingle && b.isSingle) return 1;
+
             if (a.priority !== b.priority) return a.priority - b.priority;
-            
-            if (a.isSingle && !b.isSingle && a.capacity >= nbPersons) return -1;
-            if (!a.isSingle && b.isSingle && b.capacity >= nbPersons) return 1;
 
             return a.capacity - b.capacity;
         });
