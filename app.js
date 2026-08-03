@@ -1095,8 +1095,24 @@ function renderPlanningAnniversaireA4() {
       return;
   }
 
-  // Trier par heure de début
-  reservations.sort((a, b) => a.heureDebut.localeCompare(b.heureDebut));
+  // Extraire l'heure d'affichage pour le tri et le rendu
+  reservations.forEach(res => {
+      res._heureAffichage = res.heureArrivee || "";
+      res._heureFinAffichage = res.heureDepart || "";
+      if (res.activites) {
+          const tableAct = res.activites.find(a => 
+              a.nom.toLowerCase().includes("table réservée") || 
+              a.nom.toLowerCase().includes("table reservee")
+          );
+          if (tableAct && tableAct.heureDebut) {
+              res._heureAffichage = tableAct.heureDebut;
+              res._heureFinAffichage = tableAct.heureFin || res._heureFinAffichage;
+          }
+      }
+  });
+
+  // Trier par heure d'affichage
+  reservations.sort((a, b) => a._heureAffichage.localeCompare(b._heureAffichage));
 
   reservations.forEach(res => {
     const tr = document.createElement("tr");
@@ -1214,8 +1230,8 @@ function renderPlanningAnniversaireA4() {
     else if (nbP >= 8 && nbP <= 12) ouPlacerClass = 'bg-orange';
 
     tr.innerHTML = `
-        <td>${res.heureDebut} - ${res.heureFin}</td>
-        <td>${res.nomClient || "Client Inconnu"}${res.prenom ? " " + res.prenom : ""}</td>
+        <td>${res._heureAffichage} - ${res._heureFinAffichage}</td>
+        <td>${res.nom || "Client Inconnu"}${res.prenom ? " " + res.prenom : ""}</td>
         <td>${activitesDisplay}</td>
         <td>${res.nbPersonnes || "?"}</td>
         <td class="${ouPlacerClass}"></td>
