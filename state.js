@@ -878,6 +878,25 @@ class AppStateManager {
 
     // Filtrer par date locale du dossier OU conserver si la ligne est une option rattachée à un order_id de ce jour
     const filteredRows = (rows || []).filter((r) => {
+      // 1. Filtrer les réservations annulées/supprimées
+      const gStatus = (
+        r.global_status ||
+        r.raw_payload?.order?.global_status ||
+        r.raw_payload?.global_status ||
+        r.raw_payload?.order_item?.global_status ||
+        ""
+      ).toUpperCase();
+      
+      if (
+        gStatus === "CANCELLED" ||
+        gStatus === "CANCELED" ||
+        gStatus === "DELETED" ||
+        gStatus === "REFUNDED" ||
+        gStatus === "REJECTED"
+      ) {
+        return false;
+      }
+
       if (r.start_at) {
         const rowDate = new Date(r.start_at).toLocaleDateString("en-CA", {
           timeZone: "Europe/Brussels",
