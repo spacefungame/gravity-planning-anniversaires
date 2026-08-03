@@ -1144,7 +1144,7 @@ function renderPlanningAnniversaireA4() {
         }
     }
 
-    const isAdult = res.categories && (res.categories.includes("évènement adulte") || res.categories.includes("team building") || res.categories.includes("adulte"));
+    const isAdult = res.categories && (res.categories.includes("évènement adulte") || res.categories.includes("team building"));
     let prenomDisplayHtml = prenomDisplay === "???" ? "" : prenomDisplay;
     if (isAdult) {
         prenomDisplayHtml = `<span style="color:#ef4444; font-weight:bold;">Évènement adulte</span>`;

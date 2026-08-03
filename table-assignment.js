@@ -137,7 +137,7 @@ class TableAssigner {
             const nbP = Number(res.nbPersonnes) || 0;
             if (nbP === 0) return;
 
-            const isAdult = res.categories && (res.categories.includes("évènement adulte") || res.categories.includes("team building") || res.categories.includes("adulte"));
+            const isAdult = res.categories && (res.categories.includes("évènement adulte") || res.categories.includes("team building"));
 
             const fullStart = this._timeToMinutes(res.heureArrivee);
             const fullEnd = this._timeToMinutes(res.heureDepart);
