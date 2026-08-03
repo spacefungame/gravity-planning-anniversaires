@@ -2587,14 +2587,14 @@ class AppStateManager {
 
     // Évènement adulte: évènement, soirée privée, gala, cocktail
     if (
-      /\b([eéè]v[eéè]nement|soir[eéè]e\s+priv[eéè]e|gala|cocktail)\b/i.test(fullStr)
+      /(?:^|[\s/|-])([eéè]v[eéè]nement|soir[eéè]e\s+priv[eéè]e|gala|cocktail)\b/i.test(fullStr)
     ) {
       cats.push("évènement adulte");
     }
 
     // ASBL / Association: asbl, association, école, ecole, centre de jeunesse, centre de loisirs, maison de jeunes, mj
     if (
-      /\b(asbl|association|[eéè]cole|centre\s+de\s+jeunesse|centre\s+de\s+loisirs|maison\s+de\s+jeunes|mj)\b/i.test(
+      /(?:^|[\s/|-])(asbl|association|[eéè]cole|centre\s+de\s+jeunesse|centre\s+de\s+loisirs|maison\s+de\s+jeunes|mj)\b/i.test(
         fullStr,
       )
     ) {
