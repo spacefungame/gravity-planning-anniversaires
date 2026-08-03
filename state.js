@@ -447,11 +447,33 @@ class AppStateManager {
     }
   }
 
-  getEmailAlerts(bookingId) {
+  getEmailAlerts(booking) {
     const store = this.hasLocalStorage()
       ? JSON.parse(localStorage.getItem("SFG_EMAIL_ALERTS_STORE") || "{}")
       : {};
-    return store[bookingId] || [];
+      
+    // Le bookingId principal de l'interface peut commencer par "QW-"
+    const cleanBookingId = (booking.id || "").replace(/^QW-/, "");
+    
+    let allAlerts = [];
+    
+    // On vérifie le booking ID principal
+    if (store[cleanBookingId]) {
+      allAlerts = allAlerts.concat(store[cleanBookingId]);
+    }
+    
+    // L'IA a peut-être renvoyé l'ID technique d'une des SOUS-activités (ex: Laser Game) 
+    // On vérifie donc tous les IDs techniques des activités de cette commande.
+    if (booking.activites && booking.activites.length > 0) {
+      booking.activites.forEach(act => {
+        const actId = (act.id || "").replace(/^QW-/, "");
+        if (actId !== cleanBookingId && store[actId]) {
+           allAlerts = allAlerts.concat(store[actId]);
+        }
+      });
+    }
+    
+    return allAlerts;
   }
 
   // =========================================================================
@@ -2251,6 +2273,7 @@ class AppStateManager {
       }
 
       bookingsMap[orderId].activites.push({
+        id: `QW-${item.id}`,
         heureDebut: hDebut,
         heureFin: hFin,
         nom: actName,
