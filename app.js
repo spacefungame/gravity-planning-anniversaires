@@ -1189,28 +1189,28 @@ function renderPlanningAnniversaireA4() {
     else if (nbP > 12) ouPlacerClass = 'bg-red';
     else if (nbP >= 8 && nbP <= 12) ouPlacerClass = 'bg-orange';
 
-    tr.innerHTML = \`
-        <td>\${res.heureDebut} - \${res.heureFin}</td>
-        <td>\${res.nomClient || "Client Inconnu"}\${res.prenom ? " " + res.prenom : ""}</td>
-        <td>\${activitesDisplay}</td>
-        <td>\${res.nbPersonnes || "?"}</td>
-        <td class="\${ouPlacerClass}"></td>
-        <td><div contenteditable="true" onblur="if(appState.saveQweekleCustomEnfant) appState.saveQweekleCustomEnfant('\${res.id}', 0, 'nom', this.innerText)" style="cursor: text; min-height: 15px; outline: none;">\${prenomDisplay === "???" ? "" : prenomDisplay}</div></td>
-        <td><div contenteditable="true" onblur="if(appState.saveQweekleCustomEnfant) appState.saveQweekleCustomEnfant('\${res.id}', 0, 'age', this.innerText)" style="cursor: text; min-height: 15px; outline: none;">\${ageDisplay === "???" ? "" : ageDisplay}</div></td>
-        <td class="\${cellClass(opts.brownie)}">\${opts.brownie || ""}</td>
-        <td class="\${cellClass(opts.gateauCrepes)}">\${opts.gateauCrepes || ""}</td>
-        <td class="\${cellClass(opts.donuts)}">\${opts.donuts || ""}</td>
-        <td class="\${cellClass(opts.bonbons)}">\${opts.bonbons || ""}</td>
-        <td class="\${cellClass(opts.kidibul)}">\${opts.kidibul || ""}</td>
-        <td class="\${cellClass(opts.chips)}">\${opts.chips || ""}</td>
-        <td class="\${cellClass(opts.crepes)}">\${opts.crepes || ""}</td>
-        <td class="\${cellClass(opts.granite200)}">\${opts.granite200 || ""}</td>
-        <td class="\${cellClass(opts.granite350)}">\${opts.granite350 || ""}</td>
-        <td>\${heurePause}</td>
-        <td style="font-size: 0.65rem; text-align: left;"><div contenteditable="true" onblur="appState.saveQweekleCustomNote('\${res.id}', this.innerHTML.replace(/<br>/g, '\\n'))" style="cursor: text; min-height: 20px; outline: none;">\${finalCommentaire}</div></td>
+    tr.innerHTML = `
+        <td>${res.heureDebut} - ${res.heureFin}</td>
+        <td>${res.nomClient || "Client Inconnu"}${res.prenom ? " " + res.prenom : ""}</td>
+        <td>${activitesDisplay}</td>
+        <td>${res.nbPersonnes || "?"}</td>
+        <td class="${ouPlacerClass}"></td>
+        <td><div contenteditable="true" onblur="if(appState.saveQweekleCustomEnfant) appState.saveQweekleCustomEnfant('${res.id}', 0, 'nom', this.innerText)" style="cursor: text; min-height: 15px; outline: none;">${prenomDisplay === "???" ? "" : prenomDisplay}</div></td>
+        <td><div contenteditable="true" onblur="if(appState.saveQweekleCustomEnfant) appState.saveQweekleCustomEnfant('${res.id}', 0, 'age', this.innerText)" style="cursor: text; min-height: 15px; outline: none;">${ageDisplay === "???" ? "" : ageDisplay}</div></td>
+        <td class="${cellClass(opts.brownie)}">${opts.brownie || ""}</td>
+        <td class="${cellClass(opts.gateauCrepes)}">${opts.gateauCrepes || ""}</td>
+        <td class="${cellClass(opts.donuts)}">${opts.donuts || ""}</td>
+        <td class="${cellClass(opts.bonbons)}">${opts.bonbons || ""}</td>
+        <td class="${cellClass(opts.kidibul)}">${opts.kidibul || ""}</td>
+        <td class="${cellClass(opts.chips)}">${opts.chips || ""}</td>
+        <td class="${cellClass(opts.crepes)}">${opts.crepes || ""}</td>
+        <td class="${cellClass(opts.granite200)}">${opts.granite200 || ""}</td>
+        <td class="${cellClass(opts.granite350)}">${opts.granite350 || ""}</td>
+        <td>${heurePause}</td>
+        <td style="font-size: 0.65rem; text-align: left;"><div contenteditable="true" onblur="appState.saveQweekleCustomNote('${res.id}', this.innerHTML.replace(/<br>/g, '\\n'))" style="cursor: text; min-height: 20px; outline: none;">${finalCommentaire}</div></td>
         <td></td>
         <td></td>
-    \`;
+    `;
     tbody.appendChild(tr);
   });
 }
