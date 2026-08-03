@@ -726,11 +726,11 @@ function renderLaserPlanning() {
   }
 
   // 5. Génération thead
-  let theadHtml = `<tr><th style="width: 5%; text-align: center; border: 1px solid #000; padding: 4px;">Heure</th>`;
+  let theadHtml = `<tr><th style="width: 5%; text-align: center; border: 1px solid #000; padding: 1px 2px; font-size: 0.8rem;">Heure</th>`;
   for (let i = 1; i <= maxCols; i++) {
-      theadHtml += `<th style="border: 1px solid #000; padding: 4px;">Nom</th><th style="width: 4%; text-align: center; border: 1px solid #000; font-size: 0.7rem; padding: 4px;" title="Nombre">Nbre</th>`;
+      theadHtml += `<th style="border: 1px solid #000; padding: 1px 2px; font-size: 0.8rem;">Nom</th><th style="width: 4%; text-align: center; border: 1px solid #000; font-size: 0.7rem; padding: 1px 2px;" title="Nombre">Nbre</th>`;
   }
-  theadHtml += `<th style="width: 5%; text-align: center; border: 1px solid #000; padding: 4px;">Total</th><th style="width: 7%; text-align: center; border: 1px solid #000; font-size: 0.8rem; padding: 4px;">places dispos</th></tr>`;
+  theadHtml += `<th style="width: 5%; text-align: center; border: 1px solid #000; padding: 1px 2px; font-size: 0.8rem;">Total</th><th style="width: 7%; text-align: center; border: 1px solid #000; font-size: 0.7rem; padding: 1px 2px;">places dispos</th></tr>`;
   thead.innerHTML = theadHtml;
 
   // 6. Génération tbody (trier par heure)
@@ -747,25 +747,25 @@ function renderLaserPlanning() {
       const tr = document.createElement("tr");
       
       // Heure
-      let trHtml = `<td style="font-weight: bold; text-align: center; border: 1px solid #000; padding: 4px;">${time}</td>`;
+      let trHtml = `<td style="font-weight: bold; text-align: center; border: 1px solid #000; padding: 1px 2px; font-size: 0.8rem;">${time}</td>`;
       
       // Groupes
       for (let i = 0; i < maxCols; i++) {
           if (i < groups.length) {
               const g = groups[i];
               const bg = g.isAnniv ? "background-color: #FFFF00; font-weight: bold;" : "";
-              trHtml += `<td style="${bg} border-left: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 6px;">${g.nom}</td>`;
-              trHtml += `<td style="${bg} text-align: center; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 2px;">${g.nb > 0 ? g.nb : ''}</td>`;
+              trHtml += `<td style="${bg} border-left: 1px solid #000; border-bottom: 1px solid #000; padding: 1px 4px; font-size: 0.8rem;">${g.nom}</td>`;
+              trHtml += `<td style="${bg} text-align: center; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 1px 2px; font-size: 0.85rem;">${g.nb > 0 ? g.nb : ''}</td>`;
           } else {
-              trHtml += `<td style="border-left: 1px solid #000; border-bottom: 1px solid #000; padding: 4px;"></td><td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4px;"></td>`;
+              trHtml += `<td style="border-left: 1px solid #000; border-bottom: 1px solid #000; padding: 1px;"></td><td style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 1px;"></td>`;
           }
       }
       
       // Totaux
       const warningTotal = total > 30 ? "background-color: #F56565; color: white; font-weight: bold;" : "";
       const warningDispo = dispo < 0 ? "background-color: #F56565; color: white; font-weight: bold;" : "";
-      trHtml += `<td style="text-align: center; font-weight: bold; border: 1px solid #000; padding: 4px; ${warningTotal}">${total}</td>`;
-      trHtml += `<td style="text-align: center; font-weight: bold; border: 1px solid #000; padding: 4px; ${warningDispo}">${dispo}</td>`;
+      trHtml += `<td style="text-align: center; font-weight: bold; border: 1px solid #000; padding: 1px 2px; font-size: 0.85rem; ${warningTotal}">${total}</td>`;
+      trHtml += `<td style="text-align: center; font-weight: bold; border: 1px solid #000; padding: 1px 2px; font-size: 0.85rem; ${warningDispo}">${dispo}</td>`;
       
       tr.innerHTML = trHtml;
       tbody.appendChild(tr);
