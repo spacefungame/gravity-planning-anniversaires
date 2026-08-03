@@ -277,19 +277,25 @@
             <div class="view-header">
                 <div>
                     <h2>🤝 Planning Team Game</h2>
-                    <p class="view-subtitle" id="subtitle-team">Défis d'équipe, Team Building et challenges collaborateurs</p>
+                    <p class="view-subtitle" id="subtitle-team">Défis d'équipe et Prison Island (Format imprimable)</p>
                 </div>
-                <button type="button" class="btn-add" onclick="openEventModal('team')">+ Ajouter un Team Game</button>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button type="button" class="btn-print" onclick="window.print()">🖨️ Imprimer A4</button>
+                    <button type="button" class="btn-add" onclick="openEventModal('team')">+ Ajouter un Team Game</button>
+                </div>
             </div>
-            <div class="classic-planning-container">
-                <table class="planning-table" id="table-team">
-                    <thead>
-                        <tr>
-                            <th class="time-col">Horaire</th>
-                            <th>Sessions Team Game (Missions, Scoreurs, Salles)</th>
-                        </tr>
+            
+            <div class="a4-print-container">
+                <div class="a4-header a4-header-team" style="background-color: #FF9900; color: #000; text-align: center; font-weight: bold; font-size: 1.15rem; padding: 6px; border: 2px solid #000; margin-bottom: 0;">
+                    PLANNING TEAM GAME - <span id="team-a4-date-title">DATE</span>
+                </div>
+                <table class="a4-planning-table a4-laser-table" id="table-team-a4" style="border-top: none;">
+                    <thead id="thead-team-a4">
+                        <!-- Généré dynamiquement -->
                     </thead>
-                    <tbody id="tbody-team"></tbody>
+                    <tbody id="tbody-team-a4">
+                        <!-- Généré dynamiquement -->
+                    </tbody>
                 </table>
             </div>
         </section>

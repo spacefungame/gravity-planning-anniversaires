@@ -1528,7 +1528,7 @@ body {
         display: none !important;
     }
     
-    #view-anniversaire.active, #view-laser.active {
+    #view-anniversaire.active, #view-laser.active, #view-team.active {
         position: absolute;
         top: 0;
         left: 0;
