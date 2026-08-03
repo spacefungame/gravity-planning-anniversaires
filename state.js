@@ -1237,9 +1237,18 @@ class AppStateManager {
 
       // 7. Options supplémentaires choisies (accumuler les quantités, ignorer les packs/activités)
       const optionsMap = new Map();
+      const processedOptionIds = new Set();
 
-      const addOption = (lblRaw, qtyRaw) => {
+      const addOption = (lblRaw, qtyRaw, itemId) => {
         if (!lblRaw) return;
+
+        // Anti-doublon robuste basé sur l'ID de l'item (pour éviter de recompter les mêmes options
+        // issues de raw_payload.order.items présents dans chaque webhook d'activité)
+        if (itemId) {
+          if (processedOptionIds.has(itemId)) return;
+          processedOptionIds.add(itemId);
+        }
+
         let clean = this.cleanLabel(lblRaw.trim());
         const cleanLower = clean.toLowerCase();
 
@@ -1265,8 +1274,8 @@ class AppStateManager {
 
         const existingQty = optionsMap.get(clean) || 0;
         const newQty = Number(qtyRaw) || 1;
-        // On prend le MAX pour éviter de compter en double si l'option vient de plusieurs sources (ex: item injecté + raw_payload)
-        optionsMap.set(clean, Math.max(existingQty, newQty));
+        // Additionner au lieu de Math.max, puisque le Set anti-doublon protège des répétitions du même ID
+        optionsMap.set(clean, existingQty + newQty);
       };
 
       group.forEach((act) => {
@@ -1309,7 +1318,7 @@ class AppStateManager {
             !act.start_at
           ) {
             if (lbl) {
-              addOption(lbl, act.qty);
+              addOption(lbl, act.qty, act.id || act.order_item_id);
             }
           }
         }
@@ -1338,7 +1347,11 @@ class AppStateManager {
                     oi.category?.toLowerCase().includes("produit") ||
                     !oi.start_at)
                 ) {
-                  addOption(oiLabel, oi.qty);
+                  // Fallback: si pas d'ID, on génère un hash basé sur le label pour ne pas tout accumuler aveuglément
+                  // à chaque boucle (7 webhooks = 7 accumulations)
+                  const itemHash =
+                    oi.id || oi.order_item_id || `hash_${oiLabel}_${oi.qty}`;
+                  addOption(oiLabel, oi.qty, itemHash);
                 }
               });
             }
