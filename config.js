@@ -62,6 +62,22 @@ const CONFIG = {
         }
     },
 
+    // Configuration des tables pour l'attribution automatique (Planning Anniversaire)
+    TABLES: [
+        { id: "STG+", capacity: 22, priority: 1, zone: "STG" },
+        { id: "STG-", capacity: 17, priority: 1, zone: "STG" },
+        { id: "R1", capacity: 10, priority: 1, zone: "R" },
+        { id: "R2", capacity: 10, priority: 1, zone: "R" },
+        { id: "R4", capacity: 14, priority: 1, zone: "R" },
+        { id: "R3", capacity: 6, priority: 1, zone: "R" },
+        { id: "T1", capacity: 17, priority: 2, zone: "T" },
+        { id: "T2", capacity: 12, priority: 2, zone: "T" },
+        { id: "T3", capacity: 12, priority: 2, zone: "T" },
+        { id: "T4", capacity: 12, priority: 2, zone: "T" },
+        { id: "T5", capacity: 8, priority: 2, zone: "T" },
+        { id: "T6", capacity: 8, priority: 2, zone: "T" }
+    ],
+
     // Données de démonstration réalistes pour que le planning ne soit pas vide au premier lancement
     DEMO_DATA: {
         "2026-07-10": [

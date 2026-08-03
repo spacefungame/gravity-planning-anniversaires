@@ -1,0 +1,206 @@
+/**
+ * Module d'attribution automatique des tables
+ * Se base sur CONFIG.TABLES
+ */
+
+class TableAssigner {
+    constructor(tablesConfig) {
+        this.tables = tablesConfig;
+        this.adjacencies = {
+            "T1": ["T2"],
+            "T2": ["T1", "T3"],
+            "T3": ["T2", "T4"],
+            "T4": ["T3", "T5"],
+            "T5": ["T4", "T6"],
+            "T6": ["T5"],
+            "STG+": ["STG-"],
+            "STG-": ["STG+"],
+            "R1": ["R2", "R3", "R4"],
+            "R2": ["R1", "R3", "R4"],
+            "R3": ["R1", "R2", "R4"],
+            "R4": ["R1", "R2", "R3"]
+        };
+        // Pré-calcul de toutes les combinaisons valides de tables
+        this.validCombinations = this._generateAllCombinations();
+    }
+
+    _generateAllCombinations() {
+        const combos = [];
+
+        // 1. Tables individuelles
+        this.tables.forEach(t => {
+            combos.push({
+                tables: [t.id],
+                capacity: t.capacity,
+                priority: t.priority,
+                isSingle: true
+            });
+        });
+
+        // Fonction utilitaire pour éviter les doublons de combinaisons
+        const addCombo = (tablesArray, priorityOverride = null) => {
+            tablesArray.sort(); // Pour comparer facilement
+            if (combos.find(c => c.tables.slice().sort().join(',') === tablesArray.join(','))) return;
+            
+            const cap = tablesArray.reduce((sum, id) => sum + this.tables.find(t=>t.id===id).capacity, 0);
+            const prio = priorityOverride !== null ? priorityOverride : Math.min(...tablesArray.map(id => this.tables.find(t=>t.id===id).priority));
+            
+            combos.push({
+                tables: tablesArray,
+                capacity: cap,
+                priority: prio,
+                isSingle: false
+            });
+        };
+
+        // 2. Fusions autorisées (2 tables)
+        for (const [tId, neighbors] of Object.entries(this.adjacencies)) {
+            neighbors.forEach(nId => addCombo([tId, nId]));
+        }
+
+        // Fusions de 3+ tables (surtout pour R et T)
+        const rTables = ["R1", "R2", "R3", "R4"];
+        // 3 tables R
+        for (let i=0; i<rTables.length; i++) {
+            for (let j=i+1; j<rTables.length; j++) {
+                for (let k=j+1; k<rTables.length; k++) {
+                    addCombo([rTables[i], rTables[j], rTables[k]], 1);
+                }
+            }
+        }
+        // 4 tables R
+        addCombo(rTables, 1);
+
+        // 3 tables T (T1+T2+T3, etc.)
+        for (let i=1; i<=4; i++) {
+            addCombo([`T${i}`, `T${i+1}`, `T${i+2}`], 2);
+        }
+
+        // 4 tables T
+        for (let i=1; i<=3; i++) {
+            addCombo([`T${i}`, `T${i+1}`, `T${i+2}`, `T${i+3}`], 2);
+        }
+
+        // Tri des combinaisons : par capacité croissante (pour minimiser le gaspillage)
+        combos.sort((a, b) => a.capacity - b.capacity);
+        return combos;
+    }
+
+    _timeToMinutes(timeStr) {
+        if (!timeStr) return 0;
+        const [h, m] = timeStr.split(":").map(Number);
+        return h * 60 + (m || 0);
+    }
+
+    _areTimesOverlapping(start1, end1, start2, end2) {
+        // start1 < end2 AND start2 < end1
+        return start1 < end2 && start2 < end1;
+    }
+
+    _isTableAvailable(tablesRequired, start, end, assignments) {
+        for (const t of tablesRequired) {
+            for (const assigned of assignments) {
+                if (assigned.tables.includes(t)) {
+                    if (this._areTimesOverlapping(start, end, assigned.start, assigned.end)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Attribue les tables pour une liste de réservations sur une journée
+     * @param {Array} reservations 
+     * @returns {Map} Map(reservation_id => { tables: ["T1"], reducedTime: false })
+     */
+    assign(reservations) {
+        const assignmentsMap = new Map();
+        const timeline = []; 
+
+        const sortedRes = [...reservations].sort((a, b) => {
+            const aStart = this._timeToMinutes(a.heureArrivee);
+            const bStart = this._timeToMinutes(b.heureArrivee);
+            return aStart - bStart;
+        });
+
+        sortedRes.forEach(res => {
+            const nbP = Number(res.nbPersonnes) || 0;
+            if (nbP === 0) return;
+
+            const fullStart = this._timeToMinutes(res.heureArrivee);
+            const fullEnd = this._timeToMinutes(res.heureDepart);
+            
+            let tableStart = fullStart;
+            let tableEnd = fullEnd;
+            let reducedTime = false;
+
+            let bestCombo = this._findBestCombination(nbP, fullStart, fullEnd, timeline);
+
+            if (!bestCombo && res.activites) {
+                const tableAct = res.activites.find(a => 
+                    a.nom.toLowerCase().includes("table réservée") || 
+                    a.nom.toLowerCase().includes("table reservee")
+                );
+                if (tableAct && tableAct.heureDebut && tableAct.heureFin) {
+                    const shortStart = this._timeToMinutes(tableAct.heureDebut);
+                    const shortEnd = this._timeToMinutes(tableAct.heureFin);
+                    
+                    bestCombo = this._findBestCombination(nbP, shortStart, shortEnd, timeline);
+                    if (bestCombo) {
+                        tableStart = shortStart;
+                        tableEnd = shortEnd;
+                        reducedTime = true;
+                    }
+                }
+            }
+
+            if (bestCombo) {
+                timeline.push({
+                    tables: bestCombo.tables,
+                    start: tableStart,
+                    end: tableEnd,
+                    resId: res.id
+                });
+                assignmentsMap.set(res.id, {
+                    tables: bestCombo.tables,
+                    reducedTime: reducedTime
+                });
+            } else {
+                assignmentsMap.set(res.id, {
+                    tables: [], // "A PLACER"
+                    reducedTime: false
+                });
+            }
+        });
+
+        return assignmentsMap;
+    }
+
+    _findBestCombination(nbPersons, start, end, currentAssignments) {
+        const candidates = this.validCombinations.filter(c => 
+            c.capacity >= nbPersons && this._isTableAvailable(c.tables, start, end, currentAssignments)
+        );
+
+        if (candidates.length === 0) return null;
+
+        // Tri: Priorité d'abord, puis capacité
+        candidates.sort((a, b) => {
+            if (a.priority !== b.priority) return a.priority - b.priority;
+            
+            // Priorité à la table simple si possible, pour limiter les grandes fusions
+            if (a.isSingle && !b.isSingle && a.capacity >= nbPersons) return -1;
+            if (!a.isSingle && b.isSingle && b.capacity >= nbPersons) return 1;
+
+            return a.capacity - b.capacity;
+        });
+
+        // Pour éviter les rotations rapides, on pourrait ici filtrer/trier selon currentAssignments,
+        // mais le tri par capacité assure déjà de ne pas "gâcher" une grande table.
+        return candidates[0];
+    }
+}
+
+// Export pour le navigateur
+window.TableAssigner = TableAssigner;

@@ -1,0 +1,63 @@
+[
+  {
+    "id": "QW-OXXXa255c1bc0ea84856871f9604ed36c155",
+    "nom": "VARAO",
+    "prenom": "Joana",
+    "societe": "",
+    "heureArrivee": "13:00",
+    "heureDepart": "15:40",
+    "nbPersonnes": 14,
+    "nomPack": "1 Heure de Team Games + 20 Min Laser Game 7-12 ans",
+    "typeActivite": "Activité",
+    "categories": [
+      "enfant",
+      "anniversaire"
+    ],
+    "enfantAnniversaire": {
+      "prenom": "Teresa",
+      "age": 127,
+      "dateNaissance": "1899-12-31",
+      "sousCompteId": "5ed4ed70-8808-11f1-a179-9b442449072d"
+    },
+    "activites": [
+      {
+        "heureDebut": "13:00",
+        "heureFin": "13:20",
+        "zone": "Activité",
+        "nom": "Accueil, enregistrement et explications des jeux",
+        "nbPersonnes": 14
+      },
+      {
+        "heureDebut": "13:20",
+        "heureFin": "14:20",
+        "zone": "Activité",
+        "nom": "1 Heure de Team Games",
+        "nbPersonnes": 14
+      },
+      {
+        "heureDebut": "14:20",
+        "heureFin": "15:00",
+        "zone": "Activité",
+        "nom": "Table réservée et complètement installée",
+        "nbPersonnes": 14
+      },
+      {
+        "heureDebut": "15:00",
+        "heureFin": "15:20",
+        "zone": "Activité",
+        "nom": "20 Min Laser Game 7-12 ans",
+        "nbPersonnes": 14
+      },
+      {
+        "heureDebut": "15:20",
+        "heureFin": "15:40",
+        "zone": "Activité",
+        "nom": "20 Min Laser Game 7-12 ans",
+        "nbPersonnes": 14
+      }
+    ],
+    "options": [
+      "14 x Frais Nourriture Externe"
+    ]
+  }
+]

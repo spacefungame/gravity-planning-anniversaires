@@ -1104,6 +1104,29 @@ function renderPlanningAnniversaireA4() {
   // Trier par heure d'affichage
   reservations.sort((a, b) => a._heureAffichage.localeCompare(b._heureAffichage));
 
+  // Attribution automatique des tables
+  let tableAssignments = new Map();
+  if (window.TableAssigner && CONFIG.TABLES) {
+      const assigner = new window.TableAssigner(CONFIG.TABLES);
+      tableAssignments = assigner.assign(reservations);
+  }
+
+  // Compter l'utilisation des tables pour les couleurs dynamiques
+  const tableCounts = {};
+  tableAssignments.forEach(assignment => {
+      assignment.tables.forEach(t => {
+          tableCounts[t] = (tableCounts[t] || 0) + 1;
+      });
+  });
+  
+  // Générer des couleurs pastel pour les tables utilisées >= 2 fois
+  const tableColors = {};
+  const tablesMulti = Object.keys(tableCounts).filter(t => tableCounts[t] > 1);
+  const hueStep = tablesMulti.length > 0 ? 360 / tablesMulti.length : 0;
+  tablesMulti.forEach((t, i) => {
+      tableColors[t] = `hsl(${i * hueStep}, 70%, 85%)`;
+  });
+
   reservations.forEach(res => {
     const tr = document.createElement("tr");
 
@@ -1212,19 +1235,41 @@ function renderPlanningAnniversaireA4() {
         finalCommentaire += `<br><span style="color: #ef4444; font-weight: bold;">📩 ALERTE EMAIL</span>`;
     }
 
-    // Règle où placer
-    let ouPlacerClass = '';
-    const nbP = Number(res.nbPersonnes) || 0;
-    if (nbP < 8 && nbP > 0) ouPlacerClass = 'bg-blue';
-    else if (nbP > 12) ouPlacerClass = 'bg-red';
-    else if (nbP >= 8 && nbP <= 12) ouPlacerClass = 'bg-orange';
+    // Règle où placer (Attribution des tables)
+    const manualTable = appState.getQweekleCustomTable(res.id);
+    let assignedTablesDisplay = "A PLACER";
+    let isReducedTime = false;
+    let tableBgColor = "";
+    
+    if (manualTable) {
+        assignedTablesDisplay = manualTable;
+        // Tenter de colorer si la table manuelle correspond à une table multi-utilisée
+        const parts = manualTable.split("+").map(p => p.trim());
+        const coloredTable = parts.find(t => tableColors[t]);
+        if (coloredTable) tableBgColor = tableColors[coloredTable];
+    } else {
+        const assignment = tableAssignments.get(res.id);
+        if (assignment && assignment.tables.length > 0) {
+            assignedTablesDisplay = assignment.tables.join(" + ");
+            isReducedTime = assignment.reducedTime;
+            const coloredTable = assignment.tables.find(t => tableColors[t]);
+            if (coloredTable) tableBgColor = tableColors[coloredTable];
+        }
+    }
+
+    // Affichage d'une alerte si la table n'est attribuée que pendant le temps de la pause
+    if (isReducedTime) {
+        assignedTablesDisplay = `⚠️ ${assignedTablesDisplay}<br><span style="font-size:0.65rem; color:red;">Durée réduite</span>`;
+    }
+
+    const tableTdStyle = tableBgColor ? `background-color: ${tableBgColor};` : `background-color: #ffffff;`;
 
     tr.innerHTML = `
         <td>${res._heureAffichage} - ${res._heureFinAffichage}</td>
         <td>${res.nom || "Client Inconnu"}${res.prenom ? " " + res.prenom : ""}</td>
         <td>${activitesDisplay}</td>
         <td>${res.nbPersonnes || "?"}</td>
-        <td class="${ouPlacerClass}"></td>
+        <td style="${tableTdStyle} font-weight: bold; text-align: center;"><div contenteditable="true" onblur="appState.saveQweekleCustomTable('${res.id}', this.innerText)" style="cursor: text; min-height: 15px; outline: none;">${assignedTablesDisplay}</div></td>
         <td><div contenteditable="true" onblur="if(appState.saveQweekleCustomEnfant) appState.saveQweekleCustomEnfant('${res.id}', 0, 'nom', this.innerText)" style="cursor: text; min-height: 15px; outline: none;">${prenomDisplay === "???" ? "" : prenomDisplay}</div></td>
         <td><div contenteditable="true" onblur="if(appState.saveQweekleCustomEnfant) appState.saveQweekleCustomEnfant('${res.id}', 0, 'age', this.innerText)" style="cursor: text; min-height: 15px; outline: none;">${ageDisplay === "???" ? "" : ageDisplay}</div></td>
         <td class="${cellClass(opts.brownie)}">${opts.brownie || ""}</td>

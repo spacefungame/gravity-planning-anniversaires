@@ -1,0 +1,17 @@
+{
+  "id": "ABXXa257929d98ae4189920a2bb404f3ce04",
+  "venture_id": "3de205e0-a995-11ea-b3ea-d537696521c3",
+  "sale_item_id": null,
+  "client_id": "b8bc1640-8806-11f1-b197-1368887d954d",
+  "qty": 14,
+  "single_capacity": false,
+  "type": "A",
+  "pack_step": null,
+  "activated": true,
+  "state": "confirmed",
+  "source": "front",
+  "origin": "front_order",
+  "created_at": "2026-07-25T11:00:56+02:00",
+  "updated_at": "2026-07-25T11:09:31+02:00",
+  "deleted_at": null
+}

@@ -1,0 +1,17 @@
+{
+  "id": "OXXX932f43c8af3348b1bc97adb3fcba1e89",
+  "venture_id": "3de205e0-a995-11ea-b3ea-d537696521c3",
+  "client_id": "b230d610-443d-11eb-9c97-b1607387a82d",
+  "recipient_client_id": null,
+  "number": "O-210413-000001",
+  "note": null,
+  "front_note": null,
+  "global_status": "proposal",
+  "barcode": "OADB3FCBA1E89",
+  "show_in_pos": null,
+  "type": "sale_order",
+  "created_by": null,
+  "deleted_at": null,
+  "created_at": "2021-04-13T13:08:19+02:00",
+  "updated_at": "2021-04-13T13:08:19+02:00"
+}

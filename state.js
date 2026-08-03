@@ -316,6 +316,32 @@ class AppStateManager {
     this.pushCustomOverrideToSupabase(bookingId);
   }
 
+  saveQweekleCustomTable(bookingId, value) {
+    const store = this.hasLocalStorage()
+      ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_TABLE_STORE") || "{}")
+      : {};
+
+    if (value && value.trim() !== "") {
+      store[bookingId] = value.trim();
+    } else {
+      delete store[bookingId];
+    }
+
+    if (this.hasLocalStorage()) {
+      localStorage.setItem("SFG_QWEEKLE_TABLE_STORE", JSON.stringify(store));
+    }
+    
+    // Si besoin on peut aussi pousser vers Supabase, mais les tables sont temporaires par jour
+    // this.pushCustomOverrideToSupabase(bookingId);
+  }
+
+  getQweekleCustomTable(bookingId) {
+    const store = this.hasLocalStorage()
+      ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_TABLE_STORE") || "{}")
+      : {};
+    return store[bookingId] || null;
+  }
+
   // =========================================================================
   // GESTION DES NOTES MANUELLES QWEEKLE
   // =========================================================================
