@@ -1329,7 +1329,7 @@ class AppStateManager {
         const typeRaw = (rp.type || act.type || "").toUpperCase();
 
         // Si c'est un produit injecté qui représente le pack principal
-        if (typeRaw === "PACK" && !act.start_at) {
+        if ((typeRaw === "PACK" || typeRaw === "PRODUCT") && !act.start_at) {
           const lbl = this.cleanLabel(
             (rp.label || act.label || act.nom || "").trim(),
           );
@@ -1341,7 +1341,6 @@ class AppStateManager {
 
         // Ignorer les autres produits injectés pour le calcul du nom du pack
         if (
-          typeRaw === "PRODUCT" ||
           typeRaw === "OPTION" ||
           typeRaw === "DEPOSIT"
         )
@@ -2484,7 +2483,7 @@ class AppStateManager {
     }
 
     // Anniversaire: anniversaire, birthday
-    if (/\b(anniversaire|birthday)\b/i.test(fullStr)) {
+    if (/\b(anniversaire|birthday)\b/i.test(fullStr) || /\banniv/i.test(fullStr)) {
       cats.push("anniversaire");
     }
 
