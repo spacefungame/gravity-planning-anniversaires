@@ -831,6 +831,7 @@ function renderPlanningComplet(filterCategory = currentQweekleCategoryFilter) {
             <div class="qweekle-card-header">
                 <div class="qweekle-badges-group">
                     <span style="font-weight: 700; font-size: 0.74rem; color: var(--text-main); margin-right: 4px;" title="ID complet: #${res.id}">🏷️ #${shortId}</span>
+                    <button class="hide-booking-btn" onclick="appState.hideQweekleBooking('${res.id}')" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); cursor: pointer; font-size: 0.74rem; padding: 2px 6px; border-radius: 4px; color: #ef4444; margin-right: 4px; transition: all 0.2s;" title="Masquer cette réservation fantôme (définitivement)" onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'">🗑️ Masquer</button>
                     ${badgesHtml}
                 </div>
                 <div class="qweekle-time-badge">

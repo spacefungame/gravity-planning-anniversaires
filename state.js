@@ -248,6 +248,49 @@ class AppStateManager {
     }
   }
 
+  async hideQweekleBooking(bookingId) {
+    if (!confirm("Voulez-vous vraiment masquer cette réservation fantôme ? (Utile quand une annulation n'a pas été synchronisée par Qweekle). Elle disparaîtra de l'écran pour tout le monde.")) return;
+    
+    // Save in local storage
+    if (this.hasLocalStorage()) {
+      const store = JSON.parse(localStorage.getItem("SFG_QWEEKLE_HIDDEN_STORE") || "{}");
+      store[bookingId] = true;
+      localStorage.setItem("SFG_QWEEKLE_HIDDEN_STORE", JSON.stringify(store));
+    }
+    
+    // Save in Supabase
+    const payload = {
+      qweekle_booking_id: `NOTE_${bookingId}`,
+      order_id: "CUSTOM_NOTE",
+      start_at: `${this.currentDate}T00:00:00+00:00`,
+      raw_payload: {
+        hidden: true,
+      },
+    };
+    try {
+      await fetch(
+        CONFIG.SUPABASE_URL + "/rest/v1/booking_activities?on_conflict=qweekle_booking_id",
+        {
+          method: "POST",
+          headers: {
+            apikey: CONFIG.SUPABASE_KEY,
+            Authorization: `Bearer ${CONFIG.SUPABASE_KEY}`,
+            "Content-Type": "application/json",
+            Prefer: "resolution=merge-duplicates",
+          },
+          body: JSON.stringify(payload),
+        },
+      );
+    } catch (e) {
+      console.warn("Erreur push custom hide", e);
+    }
+
+    if (typeof window !== "undefined") {
+      const btn = document.getElementById("btn-sync-qweekle");
+      if (btn) btn.click();
+    }
+  }
+
   saveQweekleCustomEnfant(bookingId, index, key, value) {
     const store = this.hasLocalStorage()
       ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_ENFANTS_STORE") || "{}")
@@ -847,21 +890,35 @@ class AppStateManager {
                 JSON.stringify(store),
               );
           }
-          if (r.raw_payload.customEnfants) {
-            const eStore = this.hasLocalStorage()
-              ? JSON.parse(
-                  localStorage.getItem("SFG_QWEEKLE_ENFANTS_STORE") || "{}",
-                )
-              : {};
-            eStore[bid] = r.raw_payload.customEnfants;
-            if (this.hasLocalStorage())
-              localStorage.setItem(
-                "SFG_QWEEKLE_ENFANTS_STORE",
-                JSON.stringify(eStore),
-              );
+            if (r.raw_payload.customEnfants) {
+              const eStore = this.hasLocalStorage()
+                ? JSON.parse(
+                    localStorage.getItem("SFG_QWEEKLE_ENFANTS_STORE") || "{}",
+                  )
+                : {};
+              eStore[bid] = r.raw_payload.customEnfants;
+              if (this.hasLocalStorage())
+                localStorage.setItem(
+                  "SFG_QWEEKLE_ENFANTS_STORE",
+                  JSON.stringify(eStore),
+                );
+            }
+            if (r.raw_payload.hidden !== undefined) {
+              const hStore = this.hasLocalStorage()
+                ? JSON.parse(
+                    localStorage.getItem("SFG_QWEEKLE_HIDDEN_STORE") || "{}",
+                  )
+                : {};
+              if (r.raw_payload.hidden) hStore[bid] = true;
+              else delete hStore[bid];
+              if (this.hasLocalStorage())
+                localStorage.setItem(
+                  "SFG_QWEEKLE_HIDDEN_STORE",
+                  JSON.stringify(hStore),
+                );
+            }
           }
-        }
-        return; // on ne le garde pas comme une vraie réservation
+          return; // on ne le garde pas comme une vraie réservation
       }
 
       cleanRows.push(r);
@@ -931,6 +988,11 @@ class AppStateManager {
       return false;
     });
 
+    // 0.5 Charger les réservations masquées manuellement
+    const hiddenStore = this.hasLocalStorage()
+      ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_HIDDEN_STORE") || "{}")
+      : {};
+
     // Regrouper par order_id ou par identifiant unique de réservation
     const groups = {};
     filteredRows.forEach((r) => {
@@ -940,6 +1002,11 @@ class AppStateManager {
         r.order_item?.order?.id ||
         r.qweekle_booking_id ||
         r.id;
+
+      if (hiddenStore[oid] || hiddenStore[r.qweekle_booking_id] || hiddenStore[r.id]) {
+        return; // IGNORER LES RÉSERVATIONS MASQUÉES
+      }
+
       if (!groups[oid]) groups[oid] = [];
       groups[oid].push(r);
     });
