@@ -1349,7 +1349,7 @@ body {
    IMPRESSION A4 STRICTE (RAPPORT D'AUDIT)
    ========================================================================== */
 @media print {
-    body > *:not(#error-report-modal) {
+    body.print-error-report > *:not(#error-report-modal) {
         display: none !important;
     }
     #error-report-modal {
@@ -1502,7 +1502,7 @@ body {
 
 /* Impression du tableau A4 paysage */
 @media print {
-    body > *:not(#app-content) {
+    body:not(.print-error-report) > *:not(#app-content) {
         display: none !important;
     }
     #app-content > *:not(#view-anniversaire) {

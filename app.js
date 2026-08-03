@@ -2117,7 +2117,9 @@ async function runErrorReportAudit() {
 }
 
 function printErrorReport() {
+  document.body.classList.add('print-error-report');
   window.print();
+  document.body.classList.remove('print-error-report');
 }
 
 window.openErrorReportModal = openErrorReportModal;
