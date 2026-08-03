@@ -1504,7 +1504,15 @@ class AppStateManager {
 
       group.forEach((act) => {
         const catLower = (act.category || "").toLowerCase();
-        const lbl = (act.label || "").trim();
+        const lblRaw = (act.label || "").trim();
+        let lbl = this.cleanLabel(lblRaw);
+        if (lbl.includes("+")) {
+          lbl = lbl
+            .split("+")
+            .map((p) => this.cleanLabel(p.trim()))
+            .filter((p) => p && !this.isOptionLabel(p))
+            .join(" + ");
+        }
         const lblLower = lbl.toLowerCase();
         const typeRaw = (act.raw_payload?.type || act.type || "").toUpperCase();
 
@@ -1553,7 +1561,15 @@ class AppStateManager {
             if (Array.isArray(items)) {
               items.forEach((oi) => {
                 const oiType = (oi.type || "").toUpperCase();
-                const oiLabel = (oi.label || oi.nom || "").trim();
+                const oiLabelRaw = (oi.label || oi.nom || "").trim();
+                let oiLabel = this.cleanLabel(oiLabelRaw);
+                if (oiLabel.includes("+")) {
+                  oiLabel = oiLabel
+                    .split("+")
+                    .map((p) => this.cleanLabel(p.trim()))
+                    .filter((p) => p && !this.isOptionLabel(p))
+                    .join(" + ");
+                }
                 const oiLower = oiLabel.toLowerCase();
                 const oiMatchesPack =
                   nomPack.toLowerCase().includes(oiLower) ||
