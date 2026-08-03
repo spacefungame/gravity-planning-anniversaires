@@ -858,6 +858,13 @@ function renderPlanningComplet(filterCategory = currentQweekleCategoryFilter) {
                       res.enfantAnniversaire
                         ? (() => {
                             const ea = res.enfantAnniversaire || {};
+                            const customEnfants =
+                              typeof appState.getQweekleCustomEnfants ===
+                              "function"
+                                ? appState.getQweekleCustomEnfants(res.id)
+                                : {};
+                            const customEa = customEnfants[0] || {};
+
                             let p = ea.prenom || "???";
                             if (
                               p === "Enfant fêté" ||
@@ -865,6 +872,8 @@ function renderPlanningComplet(filterCategory = currentQweekleCategoryFilter) {
                               p.trim() === ""
                             )
                               p = "???";
+                            if (customEa.nom) p = customEa.nom;
+
                             let a = ea.age || "???";
                             let aDisplay = "???";
                             if (
@@ -881,6 +890,8 @@ function renderPlanningComplet(filterCategory = currentQweekleCategoryFilter) {
                             ) {
                               aDisplay = a;
                             }
+                            if (customEa.age) aDisplay = customEa.age;
+
                             const isUnknown = p === "???" || aDisplay === "???";
                             let dateDisplay = "";
                             if (ea.dateNaissance) {
@@ -900,9 +911,9 @@ function renderPlanningComplet(filterCategory = currentQweekleCategoryFilter) {
                             <div class="birthday-child-info" style="flex: 1;">
                                 <div class="birthday-child-title" style="font-size: 0.68rem; font-weight: 700; color: ${isUnknown ? "#ef4444" : "#d97706"}; text-transform: uppercase; letter-spacing: 0.4px;">Enfant fêté ${ea.sousCompteId ? `<span style="text-transform: none; font-weight: 500; color: var(--text-muted);">(#${ea.sousCompteId})</span>` : ""}</div>
                                 <div class="birthday-child-name" style="font-size: 0.83rem; margin-top: 1px;">
-                                    Nom : <strong style="color: ${p === "???" ? "#ef4444" : "var(--text-main)"}">${p}</strong>
+                                    Nom : <strong contenteditable="true" onblur="if(appState.saveQweekleCustomEnfant) appState.saveQweekleCustomEnfant('${res.id}', 0, 'nom', this.innerText)" style="color: ${p === "???" ? "#ef4444" : "var(--text-main)"}; padding: 1px 4px; border-radius: 3px; cursor: text; outline: none; background: rgba(0,0,0,0.04); min-width: 30px; display: inline-block;" title="Cliquez pour modifier le nom">${p}</strong>
                                     <span style="margin: 0 4px; color: var(--border-strong);">|</span>
-                                    Âge : <strong style="color: ${aDisplay === "???" ? "#ef4444" : "var(--text-main)"}">${aDisplay}</strong>
+                                    Âge : <strong contenteditable="true" onblur="if(appState.saveQweekleCustomEnfant) appState.saveQweekleCustomEnfant('${res.id}', 0, 'age', this.innerText)" style="color: ${aDisplay === "???" ? "#ef4444" : "var(--text-main)"}; padding: 1px 4px; border-radius: 3px; cursor: text; outline: none; background: rgba(0,0,0,0.04); min-width: 25px; display: inline-block;" title="Cliquez pour modifier l'âge">${aDisplay}</strong>
                                 </div>
                                 ${dateDisplay ? `<div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 1px;">📅 ${dateDisplay}</div>` : ""}
                             </div>

@@ -198,6 +198,38 @@ class AppStateManager {
   }
 
   // =========================================================================
+  // GESTION DES ENFANTS FÊTÉS MANUELS QWEEKLE
+  // =========================================================================
+  getQweekleCustomEnfants(bookingId) {
+    const store = this.hasLocalStorage()
+      ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_ENFANTS_STORE") || "{}")
+      : {};
+    return store[bookingId] || {};
+  }
+
+  saveQweekleCustomEnfant(bookingId, index, key, value) {
+    const store = this.hasLocalStorage()
+      ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_ENFANTS_STORE") || "{}")
+      : {};
+    if (!store[bookingId]) store[bookingId] = {};
+    if (!store[bookingId][index]) store[bookingId][index] = {};
+
+    if (value && value.trim() !== "") {
+      store[bookingId][index][key] = value.trim();
+    } else {
+      delete store[bookingId][index][key];
+    }
+
+    if (Object.keys(store[bookingId][index]).length === 0)
+      delete store[bookingId][index];
+    if (Object.keys(store[bookingId]).length === 0) delete store[bookingId];
+
+    if (this.hasLocalStorage()) {
+      localStorage.setItem("SFG_QWEEKLE_ENFANTS_STORE", JSON.stringify(store));
+    }
+  }
+
+  // =========================================================================
   // GESTION DES NOTES MANUELLES QWEEKLE
   // =========================================================================
   getQweekleCustomNote(bookingId) {
