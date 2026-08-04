@@ -1881,8 +1881,15 @@ function renderPostIts() {
         chunk.forEach(res => {
             const isAnniv = res.categories && res.categories.includes("anniversaire");
             const nbPersonnes = res.nombrePersonnes || res.nb || "";
-            const clientNom = appState.cleanLabel(res.client ? `${res.client.nom} ${res.client.prenom || ''}`.trim() : (res.nom || ""));
-            const email = (res.client && res.client.email) ? res.client.email : (res.email || "");
+            
+            let clientNomHTML = "";
+            if (res.client) {
+                const nom = appState.cleanLabel(res.client.nom || "");
+                const prenom = appState.cleanLabel(res.client.prenom || "");
+                clientNomHTML = `${nom}${prenom ? `<br><span style="font-size: 0.8rem; font-weight: normal;">${prenom}</span>` : ''}`;
+            } else {
+                clientNomHTML = appState.cleanLabel(res.nom || "");
+            }
             
             // Heures des jeux
             const laserHours = extractHours(res, "laser");
@@ -1895,11 +1902,19 @@ function renderPostIts() {
 
             // Fêté / Table
             const tableAssign = appState.getQweekleCustomTable(res.id) || "";
-            const enfantsAssign = appState.getQweekleCustomEnfants(res.id) || "";
+            const enfantsInfos = appState.getQweekleCustomEnfants(res.id) || {};
+            let prenomEnfant = enfantsInfos[0]?.nom || "";
+            if (!prenomEnfant && res.enfantAnniversaire) {
+                prenomEnfant = res.enfantAnniversaire.prenom || "";
+            }
+            const enfantsAssign = prenomEnfant;
+
             let tableFete = "";
-            if (tableAssign && enfantsAssign) tableFete = `${tableAssign} / ${enfantsAssign}`;
-            else if (tableAssign) tableFete = tableAssign;
-            else if (enfantsAssign) tableFete = enfantsAssign;
+            if (isAnniv) {
+                if (tableAssign && enfantsAssign) tableFete = `${tableAssign} / ${enfantsAssign}`;
+                else if (tableAssign) tableFete = tableAssign;
+                else if (enfantsAssign) tableFete = enfantsAssign;
+            }
 
             const postitDiv = document.createElement("div");
             postitDiv.className = "postit-card-print";
@@ -1922,7 +1937,7 @@ function renderPostIts() {
                     <tr>
                         <td rowspan="2" class="col-laser-label ${laserClass}">Laser<br>Game à :</td>
                         <td rowspan="2" class="col-laser-val ${laserClass}"><span class="game-hours">${laserHours.join('<br>')}</span></td>
-                        <td class="col-nom-client">${clientNom}</td>
+                        <td class="col-nom-client">${clientNomHTML}</td>
                         <td class="col-nbre-val">${nbPersonnes}</td>
                         <td colspan="2" class="col-anniv-val ${annivClass}">${tableFete}</td>
                     </tr>
