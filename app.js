@@ -2265,40 +2265,15 @@ window.deletePostItItem = function (scope, postItId) {
 let currentHomeNoteType = "date"; // "date" ou "general"
 let homeNoteTimeout = null;
 
-function saveHomeManualNote() {
-  const textarea = document.getElementById("home-manual-note");
-  const statusEl = document.getElementById("home-note-status");
-  if (!textarea) return;
-
-  const key =
-    currentHomeNoteType === "date"
-      ? `SFG_HOME_NOTE_DATE_${appState.currentDate}`
-      : `SFG_HOME_NOTE_GENERAL`;
-
-  if (appState.hasLocalStorage()) {
-    localStorage.setItem(key, textarea.value);
-  }
-
-  if (statusEl) {
-    statusEl.style.opacity = "1";
-    if (homeNoteTimeout) clearTimeout(homeNoteTimeout);
-    homeNoteTimeout = setTimeout(() => {
-      statusEl.style.opacity = "0";
-    }, 1800);
-  }
+async function loadHomeManualNote() {
+  // Sync from Supabase first
+  await appState.syncAppNotesFromSupabase(currentHomeNoteType, appState.currentDate);
+  renderHomeNotes();
 }
 
-function loadHomeManualNote() {
-  const textarea = document.getElementById("home-manual-note");
-  if (!textarea) return;
-
-  const key =
-    currentHomeNoteType === "date"
-      ? `SFG_HOME_NOTE_DATE_${appState.currentDate}`
-      : `SFG_HOME_NOTE_GENERAL`;
-
-  const val = appState.hasLocalStorage() ? localStorage.getItem(key) || "" : "";
-  textarea.value = val;
+function renderHomeNotes() {
+  const listContainer = document.getElementById("home-notes-list");
+  if (!listContainer) return;
 
   // Mettre à jour l'état visuel des boutons de tabs
   document.querySelectorAll(".home-note-tab").forEach((btn) => {
@@ -2310,20 +2285,94 @@ function loadHomeManualNote() {
     if (btn.getAttribute("data-notetype") === "date") {
       const parts = appState.currentDate.split("-");
       const d = new Date(parts[0], parts[1] - 1, parts[2]);
-      btn.textContent = `📅 Jour (${d.getDate()}/${parts[1]})`;
+      btn.textContent = `📅 Jour (${d.getDate().toString().padStart(2, '0')}/${parts[1]})`;
     } else {
       btn.textContent = `📌 Note Générale`;
     }
   });
+
+  const notes = appState.getAppNotes(currentHomeNoteType, appState.currentDate);
+  listContainer.innerHTML = "";
+
+  if (!notes || notes.length === 0) {
+    listContainer.innerHTML = `<div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 10px;">Aucune note pour le moment.</div>`;
+    return;
+  }
+
+  notes.forEach(note => {
+    const el = document.createElement("div");
+    el.style.cssText = "background: white; border: 1px solid var(--border-light); border-radius: 6px; padding: 8px 10px; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);";
+    
+    const textEl = document.createElement("div");
+    textEl.style.cssText = "flex: 1; font-size: 0.88rem; color: var(--text-main); word-break: break-word; white-space: pre-wrap;";
+    textEl.textContent = note.text;
+    
+    const delBtn = document.createElement("button");
+    delBtn.type = "button";
+    delBtn.innerHTML = "🗑️";
+    delBtn.title = "Supprimer cette note";
+    delBtn.style.cssText = "background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 2px; color: #E53E3E; transition: transform 0.2s;";
+    delBtn.onmouseover = () => delBtn.style.transform = "scale(1.15)";
+    delBtn.onmouseout = () => delBtn.style.transform = "scale(1)";
+    delBtn.onclick = () => deleteHomeManualNote(note.id);
+    
+    el.appendChild(textEl);
+    el.appendChild(delBtn);
+    listContainer.appendChild(el);
+  });
 }
 
-function switchHomeNoteTab(type) {
+function addHomeManualNote() {
+  const input = document.getElementById("home-new-note-input");
+  if (!input || !input.value.trim()) return;
+
+  const notes = appState.getAppNotes(currentHomeNoteType, appState.currentDate);
+  notes.push({
+    id: Date.now().toString(),
+    text: input.value.trim(),
+    createdAt: new Date().toISOString()
+  });
+
+  appState.saveAppNotes(currentHomeNoteType, appState.currentDate, notes);
+  input.value = "";
+  renderHomeNotes();
+  showHomeNoteStatus("✓ Note ajoutée !");
+}
+
+function deleteHomeManualNote(noteId) {
+  if (!confirm("Voulez-vous vraiment supprimer cette note ? (Elle sera supprimée pour tout le monde)")) return;
+  
+  let notes = appState.getAppNotes(currentHomeNoteType, appState.currentDate);
+  notes = notes.filter(n => n.id !== noteId);
+  
+  appState.saveAppNotes(currentHomeNoteType, appState.currentDate, notes);
+  renderHomeNotes();
+  showHomeNoteStatus("✓ Note supprimée !");
+}
+
+function showHomeNoteStatus(msg) {
+  const statusEl = document.getElementById("home-note-status");
+  if (statusEl) {
+    statusEl.textContent = msg;
+    statusEl.style.opacity = "1";
+    if (homeNoteTimeout) clearTimeout(homeNoteTimeout);
+    homeNoteTimeout = setTimeout(() => {
+      statusEl.style.opacity = "0";
+    }, 2000);
+  }
+}
+
+async function switchHomeNoteTab(type) {
   currentHomeNoteType = type;
-  loadHomeManualNote();
+  const list = document.getElementById("home-notes-list");
+  if (list) list.innerHTML = `<div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 10px;">Chargement...</div>`;
+  await loadHomeManualNote();
 }
 
-window.saveHomeManualNote = saveHomeManualNote;
 window.loadHomeManualNote = loadHomeManualNote;
+window.renderHomeNotes = renderHomeNotes;
+window.addHomeManualNote = addHomeManualNote;
+window.deleteHomeManualNote = deleteHomeManualNote;
 window.switchHomeNoteTab = switchHomeNoteTab;
 
 // =========================================================================

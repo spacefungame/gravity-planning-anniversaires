@@ -323,6 +323,64 @@ class AppStateManager {
     }
   }
 
+  // =========================================================================
+  // GESTION DES NOTES MANUELLES PARTAGEES (EN LIGNE)
+  // =========================================================================
+  getAppNotes(type, dateStr = null) {
+    const key = type === 'general' ? 'SFG_APP_NOTES_GENERAL' : `SFG_APP_NOTES_DATE_${dateStr}`;
+    if (this.hasLocalStorage()) {
+      return JSON.parse(localStorage.getItem(key) || '[]');
+    }
+    return [];
+  }
+
+  saveAppNotes(type, dateStr, notesArray) {
+    const key = type === 'general' ? 'SFG_APP_NOTES_GENERAL' : `SFG_APP_NOTES_DATE_${dateStr}`;
+    if (this.hasLocalStorage()) {
+      localStorage.setItem(key, JSON.stringify(notesArray));
+    }
+    this.pushAppNotesToSupabase(type, dateStr, notesArray);
+  }
+
+  async pushAppNotesToSupabase(type, dateStr, notesArray) {
+    if (typeof CONFIG === "undefined" || !CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_KEY) return;
+    const qid = type === 'general' ? 'APP_NOTE_GENERAL' : `APP_NOTE_DATE_${dateStr}`;
+    const payload = {
+      qweekle_booking_id: qid,
+      order_id: "CUSTOM_NOTE",
+      start_at: `2099-12-31T00:00:00+00:00`,
+      raw_payload: { notes: notesArray }
+    };
+    try {
+      await fetch(CONFIG.SUPABASE_URL + "/rest/v1/booking_activities?on_conflict=qweekle_booking_id", {
+        method: "POST",
+        headers: {
+          apikey: CONFIG.SUPABASE_KEY,
+          Authorization: `Bearer ${CONFIG.SUPABASE_KEY}`,
+          "Content-Type": "application/json",
+          Prefer: "resolution=merge-duplicates",
+        },
+        body: JSON.stringify(payload),
+      });
+    } catch (e) { console.warn("Erreur push notes", e); }
+  }
+
+  async syncAppNotesFromSupabase(type, dateStr = null) {
+    if (typeof CONFIG === "undefined" || !CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_KEY) return;
+    const qid = type === 'general' ? 'APP_NOTE_GENERAL' : `APP_NOTE_DATE_${dateStr}`;
+    try {
+      const url = `${CONFIG.SUPABASE_URL}/rest/v1/booking_activities?select=raw_payload&qweekle_booking_id=eq.${qid}`;
+      const res = await fetch(url, { headers: { apikey: CONFIG.SUPABASE_KEY, Authorization: `Bearer ${CONFIG.SUPABASE_KEY}` } });
+      const data = await res.json();
+      if (data && data.length > 0 && data[0].raw_payload && data[0].raw_payload.notes) {
+        const key = type === 'general' ? 'SFG_APP_NOTES_GENERAL' : `SFG_APP_NOTES_DATE_${dateStr}`;
+        if (this.hasLocalStorage()) {
+          localStorage.setItem(key, JSON.stringify(data[0].raw_payload.notes));
+        }
+      }
+    } catch (e) { console.warn("Erreur sync notes", e); }
+  }
+
   async hideQweekleBooking(bookingId) {
     if (!confirm("Voulez-vous vraiment masquer cette réservation fantôme ? (Utile quand une annulation n'a pas été synchronisée par Qweekle). Elle disparaîtra de l'écran pour tout le monde.")) return;
     
