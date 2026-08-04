@@ -1626,20 +1626,28 @@ body {
 
 .postit-header-table td, .postit-header-table th {
     border: 1px solid #000;
-    padding: 6px 8px;
+    padding: 2px 4px;
     text-align: center;
     vertical-align: middle;
 }
 
-.postit-header-table .col-arrivee-label { width: 12%; font-weight: bold; }
-.postit-header-table .col-arrivee-time { width: 10%; font-weight: bold; font-size: 1.1rem; }
-.postit-header-table .col-reservation { width: 38%; }
-.postit-header-table .col-nbre { width: 10%; }
-.postit-header-table .col-anniv-header { width: 30%; font-weight: bold; font-size: 0.8rem; }
+.postit-header-table .col-arrivee-label { width: 14%; font-weight: bold; }
+.postit-header-table .col-arrivee-time { width: 10%; font-weight: bold; font-size: 1rem; }
+.postit-header-table .col-reservation { width: 34%; font-weight: bold; }
+.postit-header-table .col-nbre { width: 8%; font-weight: bold; }
+.postit-header-table .col-anniv-header { width: 34%; font-weight: bold; font-size: 0.8rem; }
+
+.postit-header-table .col-team-label { font-weight: bold; }
+.postit-header-table .col-team-val { font-weight: bold; }
+.postit-header-table .col-quiz-label { font-weight: bold; width: 20%; }
+.postit-header-table .col-quiz-val { font-weight: bold; width: 14%; }
+
+.postit-header-table .col-laser-label { font-weight: bold; }
+.postit-header-table .col-laser-val { font-weight: bold; font-size: 1rem; }
 
 .postit-header-table .col-nom-client { font-weight: bold; font-size: 1rem; }
-.postit-header-table .col-nbre-val { font-weight: bold; font-size: 1.2rem; }
-.postit-header-table .col-anniv-val { font-weight: bold; font-size: 1.1rem; }
+.postit-header-table .col-nbre-val { font-weight: bold; font-size: 1.1rem; }
+.postit-header-table .col-anniv-val { font-weight: bold; font-size: 1rem; }
 
 .is-anniv {
     border: 3px solid #e53e3e !important;
@@ -1648,18 +1656,12 @@ body {
 .bg-laser { background-color: #ffff00 !important; font-weight: bold; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 .bg-team { background-color: #93c5fd !important; font-weight: bold; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 .bg-quiz { background-color: #86efac !important; font-weight: bold; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-.bg-disabled { background-color: #d1d5db !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+.bg-disabled { background-color: #6b7280 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 
 .game-hours {
-    font-size: 1.1rem;
+    font-size: 1rem;
     display: block;
-    margin-top: 2px;
-}
-
-.col-email {
-    font-size: 0.85rem;
-    text-align: center !important;
-    padding: 4px !important;
+    margin-top: 1px;
 }
 
 .postit-blank-area {

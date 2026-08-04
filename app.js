@@ -1900,7 +1900,6 @@ function renderPostIts() {
             if (tableAssign && enfantsAssign) tableFete = `${tableAssign} / ${enfantsAssign}`;
             else if (tableAssign) tableFete = tableAssign;
             else if (enfantsAssign) tableFete = enfantsAssign;
-            else if (isAnniv) tableFete = "À définir";
 
             const postitDiv = document.createElement("div");
             postitDiv.className = "postit-card-print";
@@ -1918,24 +1917,20 @@ function renderPostIts() {
                         <td class="col-arrivee-time">${res.heureArrivee || ""}</td>
                         <td class="col-reservation">Réservation</td>
                         <td class="col-nbre">Nbre</td>
-                        <td class="col-anniv-header ${annivClass}">Anniversaire<br>Table + Prénom du fêté</td>
+                        <td colspan="2" class="col-anniv-header ${annivClass}">Anniversaire<br>Table + Prénom du fêté</td>
                     </tr>
                     <tr>
-                        <td colspan="2" rowspan="2" class="col-laser ${laserClass}">
-                            ${hasLaser ? `Laser<br>Game à :<br><span class="game-hours">${laserHours.join('<br>')}</span>` : ""}
-                        </td>
+                        <td rowspan="2" class="col-laser-label ${laserClass}">Laser<br>Game à :</td>
+                        <td rowspan="2" class="col-laser-val ${laserClass}"><span class="game-hours">${laserHours.join('<br>')}</span></td>
                         <td class="col-nom-client">${clientNom}</td>
                         <td class="col-nbre-val">${nbPersonnes}</td>
-                        <td rowspan="2" class="col-anniv-val ${annivClass}">${tableFete}</td>
+                        <td colspan="2" class="col-anniv-val ${annivClass}">${tableFete}</td>
                     </tr>
                     <tr>
-                        <td colspan="2" class="col-team ${teamClass}">
-                            ${hasTeam ? `Team Game à : <span class="game-hours">${teamHours.join(', ')}</span>` : ""}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="4" class="col-empty" style="border: none;"></td>
-                        <td class="col-email">${email}</td>
+                        <td class="col-team-label">Team Game à :</td>
+                        <td class="col-team-val ${teamClass}"><span class="game-hours">${teamHours.join(', ')}</span></td>
+                        <td class="col-quiz-label">Quiz Game à :</td>
+                        <td class="col-quiz-val ${quizClass}"><span class="game-hours">${quizHours.join(', ')}</span></td>
                     </tr>
                 </table>
                 <div class="postit-blank-area"></div>
