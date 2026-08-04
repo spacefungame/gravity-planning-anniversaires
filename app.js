@@ -1848,6 +1848,17 @@ function renderPostIts() {
     // Trier par heure d'arrivée
     reservations.sort((a, b) => (a.heureArrivee || "").localeCompare(b.heureArrivee || ""));
 
+    // Attribution automatique des tables (pour récupérer celles non manuelles)
+    let tableAssignments = new Map();
+    const currentTablesConfig = appState.getCustomTables() || CONFIG.TABLES;
+    if (window.TableAssigner && currentTablesConfig) {
+        reservations.forEach(res => {
+            res.manualTable = appState.getQweekleCustomTable(res.id);
+        });
+        const assigner = new window.TableAssigner(currentTablesConfig);
+        tableAssignments = assigner.assign(reservations);
+    }
+
     container.innerHTML = "";
 
     if (reservations.length === 0) {
@@ -1902,7 +1913,16 @@ function renderPostIts() {
             const hasQuiz = quizHours.length > 0;
 
             // Fêté / Table
-            const tableAssign = appState.getQweekleCustomTable(res.id) || "";
+            let tableAssign = appState.getQweekleCustomTable(res.id);
+            if (!tableAssign) {
+                const autoAssignment = tableAssignments.get(res.id);
+                if (autoAssignment && autoAssignment.tables.length > 0) {
+                    tableAssign = autoAssignment.tables.join(" + ");
+                } else {
+                    tableAssign = "";
+                }
+            }
+
             const enfantsInfos = appState.getQweekleCustomEnfants(res.id) || {};
             let prenomEnfant = enfantsInfos[0]?.nom || "";
             if (!prenomEnfant && res.enfantAnniversaire) {
