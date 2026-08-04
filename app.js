@@ -969,8 +969,7 @@ function renderQuizPlanning() {
   for (let h = CONFIG.HOURS_START; h <= CONFIG.HOURS_END; h++) {
     const hourStr = String(h).padStart(2, '0');
     timeGroups[`${hourStr}:00`] = [];
-    timeGroups[`${hourStr}:20`] = [];
-    timeGroups[`${hourStr}:40`] = [];
+    timeGroups[`${hourStr}:30`] = [];
   }
 
   const addOrUpdateGroup = (time, nom, nb, isAnniv) => {
