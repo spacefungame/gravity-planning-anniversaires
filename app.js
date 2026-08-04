@@ -1839,54 +1839,120 @@ window.handleManualTableUpdate = handleManualTableUpdate;
 // 7. RENDU ET GESTION DES POST-IT
 // ============================================================================
 function renderPostIts() {
-  const containerDate = document.getElementById("postits-date-container");
-  const containerGeneral = document.getElementById("postits-general-container");
-  const dateLabel = document.getElementById("postit-date-label");
-  const modalDateLabel = document.getElementById("postit-modal-date-label");
+    const container = document.getElementById("postits-a4-container");
+    if (!container) return;
+    
+    // Récupérer toutes les réservations
+    let reservations = appState.getQweekleReservationsForDate(appState.currentDate) || [];
+    
+    // Trier par heure d'arrivée
+    reservations.sort((a, b) => (a.heureArrivee || "").localeCompare(b.heureArrivee || ""));
 
-  if (!containerDate || !containerGeneral) return;
+    container.innerHTML = "";
 
-  const parts = appState.currentDate.split("-");
-  const d = new Date(parts[0], parts[1] - 1, parts[2]);
-  const formattedDate = `${DAYS_FR[d.getDay()]} ${d.getDate()} ${MONTHS_FR[d.getMonth()]}`;
+    if (reservations.length === 0) {
+        container.innerHTML = `<p style="padding: 20px; text-align: center; color: var(--text-muted);">Aucune réservation pour générer des Post-its aujourd'hui.</p>`;
+        return;
+    }
 
-  if (dateLabel) dateLabel.textContent = formattedDate;
-  if (modalDateLabel) modalDateLabel.textContent = formattedDate;
+    // Répartir par groupes de 4
+    const chunks = [];
+    for (let i = 0; i < reservations.length; i += 4) {
+        chunks.push(reservations.slice(i, i + 4));
+    }
 
-  // Post-It pour la date sélectionnée
-  const datePostIts = appState.getPostIts(appState.currentDate);
-  containerDate.innerHTML = "";
-  if (datePostIts.length === 0) {
-    containerDate.innerHTML = `<p style="color: var(--text-muted); font-style: italic; grid-column: 1 / -1;">Aucun Post-It spécifique pour le ${formattedDate}. Cliquez sur + Nouveau Post-It pour en ajouter un.</p>`;
-  } else {
-    datePostIts.forEach((p) => {
-      containerDate.appendChild(createPostItCard(p, appState.currentDate));
+    // Fonction utilitaire pour extraire les heures d'un type de jeu
+    const extractHours = (res, keyword) => {
+        if (!res.activites) return [];
+        return res.activites
+            .filter(a => a.nom && a.nom.toLowerCase().includes(keyword.toLowerCase()))
+            .map(a => a.heureDebut || "")
+            .filter(h => h !== "")
+            .sort();
+    };
+
+    chunks.forEach((chunk, pageIndex) => {
+        const pageDiv = document.createElement("div");
+        pageDiv.className = "a4-postit-page";
+
+        const gridDiv = document.createElement("div");
+        gridDiv.className = "postit-grid";
+
+        chunk.forEach(res => {
+            const isAnniv = res.categories && res.categories.includes("anniversaire");
+            const nbPersonnes = res.nombrePersonnes || res.nb || "";
+            const clientNom = appState.cleanLabel(res.client ? `${res.client.nom} ${res.client.prenom || ''}`.trim() : (res.nom || ""));
+            const email = (res.client && res.client.email) ? res.client.email : (res.email || "");
+            
+            // Heures des jeux
+            const laserHours = extractHours(res, "laser");
+            const teamHours = extractHours(res, "team");
+            const quizHours = extractHours(res, "quiz");
+            
+            const hasLaser = laserHours.length > 0;
+            const hasTeam = teamHours.length > 0;
+            const hasQuiz = quizHours.length > 0;
+
+            // Fêté / Table
+            const tableAssign = appState.getQweekleCustomTable(res.id) || "";
+            const enfantsAssign = appState.getQweekleCustomEnfants(res.id) || "";
+            let tableFete = "";
+            if (tableAssign && enfantsAssign) tableFete = `${tableAssign} / ${enfantsAssign}`;
+            else if (tableAssign) tableFete = tableAssign;
+            else if (enfantsAssign) tableFete = enfantsAssign;
+            else if (isAnniv) tableFete = "À définir";
+
+            const postitDiv = document.createElement("div");
+            postitDiv.className = "postit-card-print";
+
+            // Définition des classes de couleur
+            const annivClass = isAnniv ? "is-anniv" : "";
+            const laserClass = hasLaser ? "bg-laser" : "bg-disabled";
+            const teamClass = hasTeam ? "bg-team" : "bg-disabled";
+            const quizClass = hasQuiz ? "bg-quiz" : "bg-disabled";
+
+            postitDiv.innerHTML = `
+                <table class="postit-header-table">
+                    <tr>
+                        <td class="col-arrivee-label">Arrivée à :</td>
+                        <td class="col-arrivee-time">${res.heureArrivee || ""}</td>
+                        <td class="col-reservation">Réservation</td>
+                        <td class="col-nbre">Nbre</td>
+                        <td class="col-anniv-header ${annivClass}">Anniversaire<br>Table + Prénom du fêté</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" rowspan="2" class="col-laser ${laserClass}">
+                            ${hasLaser ? `Laser<br>Game à :<br><span class="game-hours">${laserHours.join('<br>')}</span>` : ""}
+                        </td>
+                        <td class="col-nom-client">${clientNom}</td>
+                        <td class="col-nbre-val">${nbPersonnes}</td>
+                        <td rowspan="2" class="col-anniv-val ${annivClass}">${tableFete}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="col-team ${teamClass}">
+                            ${hasTeam ? `Team Game à : <span class="game-hours">${teamHours.join(', ')}</span>` : ""}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="4" class="col-empty" style="border: none;"></td>
+                        <td class="col-email">${email}</td>
+                    </tr>
+                </table>
+                <div class="postit-blank-area"></div>
+            `;
+            gridDiv.appendChild(postitDiv);
+        });
+
+        // Combler les trous si < 4 post-its
+        for (let j = chunk.length; j < 4; j++) {
+            const emptyDiv = document.createElement("div");
+            emptyDiv.className = "postit-card-print empty-card";
+            gridDiv.appendChild(emptyDiv);
+        }
+
+        pageDiv.appendChild(gridDiv);
+        container.appendChild(pageDiv);
     });
-  }
-
-  // Post-It généraux (permanents)
-  const genPostIts = appState.getPostIts("general");
-  containerGeneral.innerHTML = "";
-  if (genPostIts.length === 0) {
-    containerGeneral.innerHTML = `<p style="color: var(--text-muted); font-style: italic; grid-column: 1 / -1;">Aucune consigne générale.</p>`;
-  } else {
-    genPostIts.forEach((p) => {
-      containerGeneral.appendChild(createPostItCard(p, "general"));
-    });
-  }
-}
-
-function createPostItCard(postIt, scope) {
-  const card = document.createElement("div");
-  card.className = "postit-card";
-  card.style.backgroundColor = postIt.color || "#FDF0D5";
-
-  card.innerHTML = `
-        <button class="postit-delete" onclick="deletePostItItem('${scope}', ${postIt.id})" title="Supprimer la note">✕</button>
-        <h4>${postIt.title}</h4>
-        <p>${postIt.content}</p>
-    `;
-  return card;
 }
 
 // ============================================================================

@@ -330,15 +330,20 @@
 
         <!-- VUE 7 : POST IT -->
         <section id="view-postit" class="view-section">
-            <div class="view-header">
+            <div class="view-header no-print">
                 <div>
                     <h2>📌 Post It</h2>
-                    <p class="view-subtitle">Espace vierge (en attente de vos instructions...)</p>
+                    <p class="view-subtitle">Grilles imprimables (4 post-its par page A4)</p>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button type="button" class="btn-print print-hide" onclick="window.print()">🖨️ Imprimer les Post-its</button>
+                    <button type="button" class="btn-primary print-hide" onclick="syncQweekleReservations()">⚡ Sync Qweekle</button>
                 </div>
             </div>
-            <!-- Conteneurs masqués pour ne rien afficher pour l'instant -->
-            <div id="postits-date-container" style="display: none;"></div>
-            <div id="postits-general-container" style="display: none;"></div>
+            
+            <div id="postits-a4-container">
+                <!-- Les pages A4 (a4-postit-page) seront générées ici par JS -->
+            </div>
         </section>
 
     </main>
