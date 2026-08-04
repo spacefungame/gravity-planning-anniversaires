@@ -1880,6 +1880,7 @@ function renderPostIts() {
 
         chunk.forEach(res => {
             const isAnniv = res.categories && res.categories.includes("anniversaire");
+            const isAdult = res.categories && res.categories.includes("évènement adulte");
             const nbPersonnes = res.nombrePersonnes || res.nb || "";
             
             let clientNomHTML = "";
@@ -1914,6 +1915,9 @@ function renderPostIts() {
                 if (tableAssign && enfantsAssign) tableFete = `${tableAssign} / ${enfantsAssign}`;
                 else if (tableAssign) tableFete = tableAssign;
                 else if (enfantsAssign) tableFete = enfantsAssign;
+            } else if (isAdult) {
+                if (tableAssign) tableFete = `${tableAssign} / Évènement Adulte`;
+                else tableFete = `Évènement Adulte`;
             }
 
             const postitDiv = document.createElement("div");
