@@ -805,9 +805,10 @@ class AppStateManager {
     if (CONFIG.QWEEKLE_API_TOKEN && CONFIG.QWEEKLE_API_BASE_URL) {
       const url = `${CONFIG.QWEEKLE_API_BASE_URL}/bookings?filter[agenda.starts_between]=${dateStr}T00:00:00,${dateStr}T23:59:59&withOrder=true`;
       try {
-        const response = await fetch(url, {
+        const response = await fetch(url + `&_=${Date.now()}`, {
           method: "GET",
           headers: CONFIG.getQweekleHeaders(),
+          cache: "no-store",
         });
 
         if (response.ok) {
@@ -945,12 +946,13 @@ class AppStateManager {
               const nextDateStr = nextDate.toISOString().split("T")[0];
               const supaUrl = `${CONFIG.SUPABASE_URL}/rest/v1/booking_activities?select=order_id,raw_payload&start_at=gte.${prevDateStr}T12:00:00Z&start_at=lt.${nextDateStr}T23:59:59Z`;
 
-              const responseSupa = await fetch(supaUrl, {
+              const responseSupa = await fetch(supaUrl + `&_=${Date.now()}`, {
                 method: "GET",
                 headers: {
                   apikey: CONFIG.SUPABASE_KEY,
                   Authorization: `Bearer ${CONFIG.SUPABASE_KEY}`,
                 },
+                cache: "no-store",
               });
               if (responseSupa.ok) {
                 const supaData = await responseSupa.json();
@@ -1064,13 +1066,14 @@ class AppStateManager {
         const nextDateStr = nextDate.toISOString().split("T")[0];
         const supaUrl = `${CONFIG.SUPABASE_URL}/rest/v1/booking_activities?select=*&start_at=gte.${prevDateStr}T12:00:00Z&start_at=lt.${nextDateStr}T23:59:59Z&order=order_id,pack_step.asc`;
 
-        const response = await fetch(supaUrl, {
+        const response = await fetch(supaUrl + `&_=${Date.now()}`, {
           method: "GET",
           headers: {
             apikey: CONFIG.SUPABASE_KEY,
             Authorization: `Bearer ${CONFIG.SUPABASE_KEY}`,
             Accept: "application/json",
           },
+          cache: "no-store",
         });
 
         if (response.ok) {
@@ -1085,13 +1088,14 @@ class AppStateManager {
               const chunkedIds = activeOrderIds.slice(0, 50); // Éviter une URL trop longue
               const orderFilter = chunkedIds.map((id) => `"${id}"`).join(",");
               const optUrl = `${CONFIG.SUPABASE_URL}/rest/v1/booking_activities?select=*&order_id=in.(${orderFilter})&order=pack_step.asc`;
-              const optRes = await fetch(optUrl, {
+              const optRes = await fetch(optUrl + `&_=${Date.now()}`, {
                 method: "GET",
                 headers: {
                   apikey: CONFIG.SUPABASE_KEY,
                   Authorization: `Bearer ${CONFIG.SUPABASE_KEY}`,
                   Accept: "application/json",
                 },
+                cache: "no-store",
               });
               if (optRes.ok) {
                 const optRows = await optRes.json();
@@ -1113,8 +1117,9 @@ class AppStateManager {
             if (CONFIG.QWEEKLE_API_TOKEN && CONFIG.QWEEKLE_API_BASE_URL) {
               try {
                 const orderPromises = activeOrderIds.map((oid) =>
-                  fetch(`${CONFIG.QWEEKLE_API_BASE_URL}/orders/${oid}`, {
+                  fetch(`${CONFIG.QWEEKLE_API_BASE_URL}/orders/${oid}?_=${Date.now()}`, {
                     headers: CONFIG.getQweekleHeaders(),
+                    cache: "no-store",
                   })
                     .then((r) => (r.ok ? r.json() : null))
                     .then((data) =>
