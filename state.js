@@ -628,30 +628,47 @@ class AppStateManager {
       ? JSON.parse(localStorage.getItem("SFG_EMAIL_ALERTS_STORE") || "{}")
       : {};
       
-    // Le bookingId principal de l'interface peut commencer par "QW-"
     const cleanBookingId = (booking.id || "").replace(/^QW-/, "");
     
-    let allAlerts = [];
+    // Collecte tous les IDs à chercher (le principal + les activités)
+    const idsToCheck = [cleanBookingId];
     
-    // On vérifie le booking ID principal
-    if (store[cleanBookingId]) {
-      allAlerts = allAlerts.concat(store[cleanBookingId]);
-    }
-    
-    // L'IA a peut-être renvoyé l'ID technique d'une des SOUS-activités (ex: Laser Game) 
-    // On vérifie donc tous les IDs techniques des activités de cette commande.
     if (booking.activites && booking.activites.length > 0) {
       booking.activites.forEach(act => {
         const actIdsStr = act.id || "";
-        const actIdsArray = actIdsStr.split(',');
-        actIdsArray.forEach(idStr => {
+        actIdsStr.split(',').forEach(idStr => {
           const actId = idStr.trim().replace(/^QW-/, "");
-          if (actId && actId !== cleanBookingId && store[actId]) {
-             allAlerts = allAlerts.concat(store[actId]);
-          }
+          if (actId) idsToCheck.push(actId);
         });
       });
     }
+
+    // Normalisation: on retire tout ce qui est non alphanumérique et les préfixes ABXX/OXXX/OIXX etc.
+    const normalizeId = (id) => id.replace(/[^a-zA-Z0-9]/g, '').replace(/^(ABXX|OXXX|OIXX|QW)/i, '');
+
+    const normalizedIdsToCheck = idsToCheck.map(normalizeId).filter(id => id.length > 5);
+
+    let allAlerts = [];
+    const addedAlertIds = new Set();
+    
+    // On parcourt tout le store pour faire un match souple
+    Object.entries(store).forEach(([alertBookingId, alerts]) => {
+      const normAlertId = normalizeId(alertBookingId);
+      
+      // Est-ce que cet ID d'alerte correspond à l'un des IDs de cette réservation ?
+      const isMatch = normalizedIdsToCheck.some(idToCheck => 
+        normAlertId.includes(idToCheck) || idToCheck.includes(normAlertId)
+      );
+      
+      if (isMatch) {
+         alerts.forEach(al => {
+           if (!addedAlertIds.has(al.id)) {
+             addedAlertIds.add(al.id);
+             allAlerts.push(al);
+           }
+         });
+      }
+    });
     
     return allAlerts;
   }
