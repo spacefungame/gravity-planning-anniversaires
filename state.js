@@ -758,6 +758,7 @@ class AppStateManager {
       lower.includes("gâteau") ||
       lower.includes("gateau") ||
       lower.includes("kidibul") ||
+      lower.includes("champagne") ||
       lower.includes("brownie") ||
       lower.includes("donut") ||
       lower.includes("bonbon") ||
@@ -1687,6 +1688,8 @@ class AppStateManager {
         if (cleanLower.includes("brownie")) clean = "Brownie";
         else if (cleanLower.includes("crêpe")) clean = "Crêpe(s)";
         else if (cleanLower.includes("bonbon")) clean = "Bonbons";
+        else if (cleanLower.includes("champagne") || cleanLower.includes("kidibul"))
+          clean = "Kidibull";
         else if (cleanLower.includes("nourriture externe"))
           clean = "Frais Nourriture Externe";
         else if (cleanLower.includes("ticket boisson"))
