@@ -1476,35 +1476,41 @@ function filterQweeklePlanning(category) {
 async function syncQweekleReservations(silent = false) {
   const btn = document.getElementById("btn-sync-qweekle");
   const badge = document.getElementById("qweekle-status-badge");
-  if (btn && !silent) {
-    btn.disabled = true;
-    btn.innerHTML = `⌛ Synchronisation en cours...`;
-  }
+  
+  try {
+    if (btn && !silent) {
+      btn.disabled = true;
+      btn.innerHTML = `⌛ Synchronisation en cours...`;
+    }
 
-  const result = await appState.fetchAndSyncQweekleReservations(
-    appState.currentDate,
-  );
+    const result = await appState.fetchAndSyncQweekleReservations(
+      appState.currentDate,
+    );
 
-  if (btn && !silent) {
-    btn.disabled = false;
-    btn.innerHTML = `⚡ Synchroniser API Qweekle`;
-  }
+    if (badge) {
+      badge.style.display = "none";
+    }
 
-  if (badge) {
-    badge.style.display = "none";
-  }
-
-  // Ré-afficher dès que la synchro Qweekle/Supabase est terminée
-  if (
-    currentActiveTab === "complet" ||
-    appState.currentTab === "planning-complet"
-  ) {
-    renderPlanningComplet();
-  } else if (currentActiveTab === "anniversaire") {
-    renderPlanningAnniversaireA4();
-  } else if (currentActiveTab === "home") {
-    renderHomeDashboard();
-    renderCalendar();
+    // Ré-afficher dès que la synchro Qweekle/Supabase est terminée
+    if (
+      currentActiveTab === "complet" ||
+      appState.currentTab === "planning-complet"
+    ) {
+      renderPlanningComplet();
+    } else if (currentActiveTab === "anniversaire") {
+      renderPlanningAnniversaireA4();
+    } else if (currentActiveTab === "home") {
+      renderHomeDashboard();
+      renderCalendar();
+    }
+  } catch (error) {
+    console.error("Erreur lors de la synchronisation:", error);
+    alert("Une erreur est survenue lors de la synchronisation (" + error.message + "). Consultez la console (F12) pour plus de détails.");
+  } finally {
+    if (btn && !silent) {
+      btn.disabled = false;
+      btn.innerHTML = `⚡ Synchroniser API Qweekle`;
+    }
   }
 }
 
