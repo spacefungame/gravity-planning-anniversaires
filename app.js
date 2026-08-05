@@ -1481,6 +1481,16 @@ async function syncQweekleReservations(silent = false) {
     if (btn && !silent) {
       btn.disabled = true;
       btn.innerHTML = `⌛ Synchronisation en cours...`;
+      
+      // Nettoyer préventivement le cache pour cette date pour être sûr que les suppressions soient reflétées, 
+      // même si l'API ou Supabase échoue ou est vide.
+      if (appState.hasLocalStorage()) {
+        try {
+          const cachedStore = JSON.parse(localStorage.getItem("SFG_QWEEKLE_STORE") || "{}");
+          delete cachedStore[appState.currentDate];
+          localStorage.setItem("SFG_QWEEKLE_STORE", JSON.stringify(cachedStore));
+        } catch(e) {}
+      }
     }
 
     const result = await appState.fetchAndSyncQweekleReservations(

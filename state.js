@@ -1039,10 +1039,18 @@ class AppStateManager {
               localStorage.getItem("SFG_QWEEKLE_STORE") || "{}",
             );
             cachedStore[dateStr] = parsedList;
-            localStorage.setItem(
-              "SFG_QWEEKLE_STORE",
-              JSON.stringify(cachedStore),
-            );
+            const keys = Object.keys(cachedStore).sort();
+            if (keys.length > 30) {
+              keys.slice(0, keys.length - 30).forEach((k) => delete cachedStore[k]);
+            }
+            try {
+              localStorage.setItem(
+                "SFG_QWEEKLE_STORE",
+                JSON.stringify(cachedStore),
+              );
+            } catch (err) {
+              console.warn("⚠️ Impossible de sauvegarder dans le cache local (Quota ?) :", err);
+            }
           }
           return {
             status: "success",
@@ -1165,10 +1173,18 @@ class AppStateManager {
               localStorage.getItem("SFG_QWEEKLE_STORE") || "{}",
             );
             cachedStore[dateStr] = parsedList;
-            localStorage.setItem(
-              "SFG_QWEEKLE_STORE",
-              JSON.stringify(cachedStore),
-            );
+            const keys = Object.keys(cachedStore).sort();
+            if (keys.length > 30) {
+              keys.slice(0, keys.length - 30).forEach((k) => delete cachedStore[k]);
+            }
+            try {
+              localStorage.setItem(
+                "SFG_QWEEKLE_STORE",
+                JSON.stringify(cachedStore),
+              );
+            } catch (err) {
+              console.warn("⚠️ Impossible de sauvegarder dans le cache local (Quota ?) :", err);
+            }
           }
           return { status: "success", data: parsedList, source: "supabase" };
         }
