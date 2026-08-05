@@ -624,53 +624,60 @@ class AppStateManager {
   }
 
   getEmailAlerts(booking) {
-    const store = this.hasLocalStorage()
-      ? JSON.parse(localStorage.getItem("SFG_EMAIL_ALERTS_STORE") || "{}")
-      : {};
+    try {
+      const store = this.hasLocalStorage()
+        ? JSON.parse(localStorage.getItem("SFG_EMAIL_ALERTS_STORE") || "{}")
+        : {};
+        
+      const cleanBookingId = (booking.id || "").toString().replace(/^QW-/, "");
       
-    const cleanBookingId = (booking.id || "").replace(/^QW-/, "");
-    
-    // Collecte tous les IDs à chercher (le principal + les activités)
-    const idsToCheck = [cleanBookingId];
-    
-    if (booking.activites && booking.activites.length > 0) {
-      booking.activites.forEach(act => {
-        const actIdsStr = act.id || "";
-        actIdsStr.split(',').forEach(idStr => {
-          const actId = idStr.trim().replace(/^QW-/, "");
-          if (actId) idsToCheck.push(actId);
+      // Collecte tous les IDs à chercher (le principal + les activités)
+      const idsToCheck = [cleanBookingId];
+      
+      if (booking.activites && Array.isArray(booking.activites) && booking.activites.length > 0) {
+        booking.activites.forEach(act => {
+          const actIdsStr = (act.id || "").toString();
+          actIdsStr.split(',').forEach(idStr => {
+            const actId = idStr.trim().replace(/^QW-/, "");
+            if (actId) idsToCheck.push(actId);
+          });
         });
-      });
-    }
-
-    // Normalisation: on retire tout ce qui est non alphanumérique et les préfixes ABXX/OXXX/OIXX etc.
-    const normalizeId = (id) => id.replace(/[^a-zA-Z0-9]/g, '').replace(/^(ABXX|OXXX|OIXX|QW)/i, '');
-
-    const normalizedIdsToCheck = idsToCheck.map(normalizeId).filter(id => id.length > 5);
-
-    let allAlerts = [];
-    const addedAlertIds = new Set();
-    
-    // On parcourt tout le store pour faire un match souple
-    Object.entries(store).forEach(([alertBookingId, alerts]) => {
-      const normAlertId = normalizeId(alertBookingId);
-      
-      // Est-ce que cet ID d'alerte correspond à l'un des IDs de cette réservation ?
-      const isMatch = normalizedIdsToCheck.some(idToCheck => 
-        normAlertId.includes(idToCheck) || idToCheck.includes(normAlertId)
-      );
-      
-      if (isMatch) {
-         alerts.forEach(al => {
-           if (!addedAlertIds.has(al.id)) {
-             addedAlertIds.add(al.id);
-             allAlerts.push(al);
-           }
-         });
       }
-    });
-    
-    return allAlerts;
+
+      // Normalisation: on retire tout ce qui est non alphanumérique et les préfixes ABXX/OXXX/OIXX etc.
+      const normalizeId = (id) => (id || "").toString().replace(/[^a-zA-Z0-9]/g, '').replace(/^(ABXX|OXXX|OIXX|QW)/i, '');
+
+      const normalizedIdsToCheck = idsToCheck.map(normalizeId).filter(id => id.length > 5);
+
+      let allAlerts = [];
+      const addedAlertIds = new Set();
+      
+      // On parcourt tout le store pour faire un match souple
+      if (store && typeof store === 'object') {
+        Object.entries(store).forEach(([alertBookingId, alerts]) => {
+          const normAlertId = normalizeId(alertBookingId);
+          
+          // Est-ce que cet ID d'alerte correspond à l'un des IDs de cette réservation ?
+          const isMatch = normalizedIdsToCheck.some(idToCheck => 
+            normAlertId.includes(idToCheck) || idToCheck.includes(normAlertId)
+          );
+          
+          if (isMatch && Array.isArray(alerts)) {
+             alerts.forEach(al => {
+               if (al && al.id && !addedAlertIds.has(al.id)) {
+                 addedAlertIds.add(al.id);
+                 allAlerts.push(al);
+               }
+             });
+          }
+        });
+      }
+      
+      return allAlerts;
+    } catch (err) {
+      console.warn("Erreur dans getEmailAlerts:", err);
+      return []; // Return empty array to prevent crashing the rendering
+    }
   }
 
   async markEmailAlertAsRead(alertId) {
