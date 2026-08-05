@@ -796,7 +796,6 @@ class AppStateManager {
     }
 
     // 3. Charger le cache, puis rafraîchir en arrière-plan depuis Supabase si configuré
-    this.loadFromCache(dateStr);
     await this.syncEmailAlertsFromSupabase();
     await this.syncOverridesFromSupabase(dateStr);
     await this.syncCustomTablesFromSupabase();
