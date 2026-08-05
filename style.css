@@ -1587,7 +1587,7 @@ body {
 .a4-postit-page {
     width: 100%;
     /* min-height ensures it takes full height of A4 landscape */
-    min-height: 190mm;
+    min-height: 200mm;
     page-break-after: always;
     display: flex;
     flex-direction: column;
@@ -1599,7 +1599,7 @@ body {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
     gap: 8mm;
-    height: 190mm;
+    height: 200mm;
     width: 100%;
 }
 

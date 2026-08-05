@@ -1898,7 +1898,7 @@ function renderPostIts() {
         chunk.forEach(res => {
             const isAnniv = res.categories && res.categories.includes("anniversaire");
             const isAdult = res.categories && res.categories.includes("évènement adulte");
-            const nbPersonnes = res.nombrePersonnes || res.nb || "";
+            const nbPersonnes = res.nbPersonnes || res.nombrePersonnes || res.nb || "";
             
             let clientNomHTML = "";
             if (res.client) {
