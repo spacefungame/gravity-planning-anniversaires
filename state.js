@@ -1686,7 +1686,9 @@ class AppStateManager {
         }
 
         if (cleanLower.includes("brownie")) clean = "Brownie";
-        else if (cleanLower.includes("crêpe")) clean = "Crêpe(s)";
+        else if ((cleanLower.includes("gâteau") || cleanLower.includes("gateau")) && (cleanLower.includes("crêpe") || cleanLower.includes("crepe")))
+          clean = "Gâteau de Crêpes";
+        else if (cleanLower.includes("crêpe") || cleanLower.includes("crepe")) clean = "Crêpe(s)";
         else if (cleanLower.includes("bonbon")) clean = "Bonbons";
         else if (cleanLower.includes("champagne") || cleanLower.includes("kidibul"))
           clean = "Kidibull";
