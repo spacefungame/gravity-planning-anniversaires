@@ -1622,6 +1622,7 @@ body {
     border-collapse: collapse;
     font-size: 0.85rem;
     color: #000;
+    border-bottom: 1px solid #000;
 }
 
 .postit-header-table td, .postit-header-table th {
@@ -1668,6 +1669,7 @@ body {
     flex-grow: 1;
     background-color: #fff;
     min-height: 80px;
+    border-top: 1px solid #000;
 }
 
 @media print {
