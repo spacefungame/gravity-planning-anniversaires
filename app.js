@@ -1659,7 +1659,14 @@ function renderPlanningAnniversaireA4() {
             }
 
             if (searchLbl.includes("brownie")) opts.brownie = (opts.brownie || 0) + qty;
-            if (searchLbl.includes("gâteau de crêpe") || searchLbl.includes("gateau de crepe") || (searchLbl.includes("gâteau") && searchLbl.includes("crêpe"))) opts.gateauCrepes = (opts.gateauCrepes || 0) + qty;
+            if (searchLbl.includes("gâteau de crêpe") || searchLbl.includes("gateau de crepe") || (searchLbl.includes("gâteau") && searchLbl.includes("crêpe"))) {
+                let nbCrepes = qty;
+                const match = searchLbl.match(/\((\d+)\s*cr[êe]pes?\)/);
+                if (match) {
+                    nbCrepes = parseInt(match[1], 10) * qty;
+                }
+                opts.gateauCrepes = (opts.gateauCrepes || 0) + nbCrepes;
+            }
             if (searchLbl.includes("donut")) opts.donuts = (opts.donuts || 0) + qty;
             if (searchLbl.includes("bonbon")) opts.bonbons = (opts.bonbons || 0) + qty;
             if (searchLbl.includes("kidibul")) opts.kidibul = (opts.kidibul || 0) + qty;
