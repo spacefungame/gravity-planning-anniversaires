@@ -813,17 +813,26 @@ class AppStateManager {
         if (response.ok) {
           const json = await response.json();
           const rawBookings = (json.data || []).filter((b) => {
-            if (b.state === "cancelled" || b.state === "deleted") return false;
+            const st = (b.state || "").toLowerCase();
+            const orderSt = (b.order?.state || b.order_item?.order?.state || "").toLowerCase();
+            
+            if (st === "cancelled" || st === "canceled" || st === "deleted" || st === "rejected") return false;
+            if (orderSt === "cancelled" || orderSt === "canceled" || orderSt === "deleted" || orderSt === "rejected") return false;
+            
+            if (b.deleted_at) return false;
+            if (b.order?.deleted_at) return false;
+            if (b.order_item?.deleted_at) return false;
+            if (b.order_item?.order?.deleted_at) return false;
 
             const orderType = b.order_item?.order?.type || b.order?.type;
 
             // Exclure les blocs fantômes/orphelins (souvent d'anciennes modifications de propositions)
-            if (b.state === "unconfirmed" && !b.order_item && !b.sale_item_id)
+            if (st === "unconfirmed" && !b.order_item && !b.sale_item_id)
               return false;
 
             // Conserver les 'propositions' (unconfirmed) si elles ont été créées par le staff (sale_order)
             // Rejeter les paniers abandonnés sur le site web (front_order)
-            if (b.state === "unconfirmed" && orderType === "front_order")
+            if (st === "unconfirmed" && orderType === "front_order")
               return false;
 
             return true;
