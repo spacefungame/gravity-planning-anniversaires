@@ -902,7 +902,8 @@ class AppStateManager {
                     lblLower.includes("déduction") ||
                     lblLower.includes("deduction") ||
                     item.type === "DEPOSIT" ||
-                    item.type === "PAID_DEPOSIT"
+                    item.type === "PAID_DEPOSIT" ||
+                    item.type === "VOUCHER"
                   )
                     return;
 
@@ -1825,7 +1826,8 @@ class AppStateManager {
                     oiType === "OPTION" ||
                     oi.category?.toLowerCase().includes("option") ||
                     oi.category?.toLowerCase().includes("produit") ||
-                    !oi.start_at)
+                    !oi.start_at) &&
+                  oiType !== "VOUCHER"
                 ) {
                   // Fallback: si pas d'ID, on génère un hash basé sur le label pour ne pas tout accumuler aveuglément
                   // à chaque boucle (7 webhooks = 7 accumulations)
