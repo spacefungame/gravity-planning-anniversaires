@@ -651,6 +651,7 @@ class AppStateManager {
 
       let allAlerts = [];
       const addedAlertIds = new Set();
+      let storeModified = false;
       
       // On parcourt tout le store pour faire un match souple
       if (store && typeof store === 'object') {
@@ -663,14 +664,46 @@ class AppStateManager {
           );
           
           if (isMatch && Array.isArray(alerts)) {
-             alerts.forEach(al => {
+             alerts.forEach((al, index) => {
                if (al && al.id && !addedAlertIds.has(al.id)) {
+                 const detected = (al.detected_changes || "").trim();
+                 
+                 let shouldIgnore = false;
+                 if (detected.toLowerCase() === "null") {
+                    shouldIgnore = true;
+                 } else {
+                    const participantMatch = detected.match(/Changement du nombre de participants\s*:\s*(\d+)/i);
+                    if (participantMatch) {
+                       const alertPax = parseInt(participantMatch[1], 10);
+                       const bookingPax = parseInt(booking.personnes, 10);
+                       if (!isNaN(alertPax) && !isNaN(bookingPax) && alertPax === bookingPax) {
+                           shouldIgnore = true;
+                       }
+                    }
+                 }
+                 
+                 if (shouldIgnore) {
+                    this.markEmailAlertAsRead(al.id); // Auto-resolve in backend
+                    alerts[index] = null; // Mark for removal locally
+                    storeModified = true;
+                    return; // Skip adding to allAlerts
+                 }
+
                  addedAlertIds.add(al.id);
                  allAlerts.push(al);
                }
              });
           }
         });
+      }
+      
+      if (storeModified) {
+         Object.keys(store).forEach(k => {
+            if (store[k]) store[k] = store[k].filter(Boolean);
+         });
+         if (this.hasLocalStorage()) {
+            localStorage.setItem("SFG_EMAIL_ALERTS_STORE", JSON.stringify(store));
+         }
       }
       
       return allAlerts;
