@@ -836,17 +836,36 @@ class AppStateManager {
 
     // 1. Tenter en direct via l'API REST officielle de Qweekle (Priorité 1 absolue maintenant qu'on a le token !)
     if (CONFIG.QWEEKLE_API_TOKEN && CONFIG.QWEEKLE_API_BASE_URL) {
-      const url = `${CONFIG.QWEEKLE_API_BASE_URL}/bookings?filter[agenda.starts_between]=${dateStr}T00:00:00,${dateStr}T23:59:59&withOrder=true`;
       try {
-        const response = await fetch(url + `&_=${Date.now()}`, {
-          method: "GET",
-          headers: CONFIG.getQweekleHeaders(),
-          cache: "no-store",
-        });
+        let allBookingsData = [];
+        let currentPage = 1;
+        let lastPage = 1;
+        let isSuccess = true;
 
-        if (response.ok) {
+        do {
+          const url = `${CONFIG.QWEEKLE_API_BASE_URL}/bookings?filter[agenda.starts_between]=${dateStr}T00:00:00,${dateStr}T23:59:59&withOrder=true&perPage=100&page=${currentPage}&_=${Date.now()}`;
+          const response = await fetch(url, {
+            method: "GET",
+            headers: CONFIG.getQweekleHeaders(),
+            cache: "no-store",
+          });
+
+          if (!response.ok) {
+            isSuccess = false;
+            break;
+          }
+
           const json = await response.json();
-          const rawBookings = (json.data || []).filter((b) => {
+          if (json.data && Array.isArray(json.data)) {
+            allBookingsData = allBookingsData.concat(json.data);
+          }
+
+          lastPage = json.metadata?.lastPage || 1;
+          currentPage++;
+        } while (currentPage <= lastPage);
+
+        if (isSuccess) {
+          const rawBookings = allBookingsData.filter((b) => {
             const st = (b.state || "").toLowerCase();
             const orderSt = (b.order?.state || b.order_item?.order?.state || "").toLowerCase();
             
