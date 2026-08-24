@@ -675,7 +675,7 @@ class AppStateManager {
                     const participantMatch = detected.match(/Changement du nombre de participants\s*:\s*(\d+)/i);
                     if (participantMatch) {
                        const alertPax = parseInt(participantMatch[1], 10);
-                       const bookingPax = parseInt(booking.personnes, 10);
+                       const bookingPax = parseInt(booking.nbPersonnes || booking.personnes, 10);
                        if (!isNaN(alertPax) && !isNaN(bookingPax) && alertPax === bookingPax) {
                            shouldIgnore = true;
                        }
