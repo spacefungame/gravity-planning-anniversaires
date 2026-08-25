@@ -1906,7 +1906,11 @@ class AppStateManager {
       if (categories.some(c => c.includes("anniv"))) {
         const allSubclients = [];
         group.forEach((act) => {
-          if (act.raw_payload && Array.isArray(act.raw_payload.subclients)) {
+          if (Array.isArray(act.subclients)) {
+            act.subclients.forEach((sc) => allSubclients.push(sc));
+          } else if (act.client?.sub_clients && Array.isArray(act.client.sub_clients)) {
+            act.client.sub_clients.forEach((sc) => allSubclients.push(sc));
+          } else if (act.raw_payload && Array.isArray(act.raw_payload.subclients)) {
             act.raw_payload.subclients.forEach((sc) => allSubclients.push(sc));
           } else if (
             act.raw_payload?.client?.sub_clients &&
