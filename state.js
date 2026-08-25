@@ -1903,7 +1903,7 @@ class AppStateManager {
       });
       // 8. Sous-compte enfant anniversaire (si réservation anniversaire)
       let enfantAnniversaire = null;
-      if (categories.includes("anniversaire")) {
+      if (categories.some(c => c.includes("anniv"))) {
         const allSubclients = [];
         group.forEach((act) => {
           if (act.raw_payload && Array.isArray(act.raw_payload.subclients)) {
@@ -2392,7 +2392,7 @@ class AppStateManager {
       );
       if (
         item.categories &&
-        item.categories.includes("anniversaire") &&
+        item.categories.some(c => c.includes("anniv")) &&
         !item.enfantAnniversaire
       ) {
         item.enfantAnniversaire = {
@@ -2610,7 +2610,7 @@ class AppStateManager {
       // Si l'information anniversaire enfant n'a pas été trouvée sur la première occurrence, tenter sur la courante
       if (
         !bookingsMap[orderId].enfantAnniversaire &&
-        bookingsMap[orderId].categories.includes("anniversaire")
+        bookingsMap[orderId].categories.some(c => c.includes("anniv"))
       ) {
         bookingsMap[orderId].enfantAnniversaire = this.extractBirthdayChildInfo(
           item,
@@ -2672,7 +2672,7 @@ class AppStateManager {
     Object.values(bookingsMap).forEach((booking) => {
       if (
         booking.categories &&
-        booking.categories.includes("anniversaire") &&
+        booking.categories.some(c => c.includes("anniv")) &&
         !booking.enfantAnniversaire
       ) {
         booking.enfantAnniversaire = {
@@ -2688,7 +2688,7 @@ class AppStateManager {
   }
 
   extractBirthdayChildInfo(item, categories) {
-    if (!categories.includes("anniversaire")) return null;
+    if (!categories.some(c => c.includes("anniv"))) return null;
 
     // 1. Chercher directement un sous-compte dans l'objet de réservation / commande
     const sc =

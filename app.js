@@ -1341,7 +1341,7 @@ function renderPlanningComplet(filterCategory = currentQweekleCategoryFilter) {
 
                     ${
                       (res.categories &&
-                        res.categories.includes("anniversaire")) ||
+                        res.categories.some(c => c.includes("anniv"))) ||
                       res.enfantAnniversaire
                         ? (() => {
                             const ea = res.enfantAnniversaire || {};
