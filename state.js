@@ -742,7 +742,7 @@ class AppStateManager {
   getQweekleReservationsForDate(dateStr) {
     // 1. Vérifier si des données Qweekle synchronisées ou en cache sont disponibles pour cette date
     const cachedStore = this.hasLocalStorage()
-      ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_STORE_V2") || "{}")
+      ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_STORE_V3") || "{}")
       : {};
     if (cachedStore[dateStr] && Array.isArray(cachedStore[dateStr])) {
       // Ne pas utiliser un cache démo ancien (Marc Dupont QW-90102) si la base Supabase est active
@@ -1010,13 +1010,14 @@ class AppStateManager {
               if (responseSupa.ok) {
                 const supaData = await responseSupa.json();
                 supaData.forEach((row) => {
-                  if (row.order_id && row.raw_payload) {
+                  if (row.raw_payload) {
                     const subs =
                       row.raw_payload.subclients ||
                       row.raw_payload.client?.sub_clients ||
                       [];
                     if (subs.length > 0) {
-                      supabaseSubclientsMap[row.order_id] = subs;
+                      if (row.order_id) supabaseSubclientsMap[row.order_id] = subs;
+                      if (row.qweekle_booking_id) supabaseSubclientsMap[row.qweekle_booking_id] = subs;
                     }
                   }
                 });
@@ -1089,7 +1090,7 @@ class AppStateManager {
 
           if (this.hasLocalStorage()) {
             const cachedStore = JSON.parse(
-              localStorage.getItem("SFG_QWEEKLE_STORE_V2") || "{}",
+              localStorage.getItem("SFG_QWEEKLE_STORE_V3") || "{}",
             );
             cachedStore[dateStr] = parsedList;
             const keys = Object.keys(cachedStore).sort();
@@ -1098,7 +1099,7 @@ class AppStateManager {
             }
             try {
               localStorage.setItem(
-                "SFG_QWEEKLE_STORE_V2",
+                "SFG_QWEEKLE_STORE_V3",
                 JSON.stringify(cachedStore),
               );
             } catch (err) {
@@ -1223,7 +1224,7 @@ class AppStateManager {
 
           if (this.hasLocalStorage()) {
             const cachedStore = JSON.parse(
-              localStorage.getItem("SFG_QWEEKLE_STORE_V2") || "{}",
+              localStorage.getItem("SFG_QWEEKLE_STORE_V3") || "{}",
             );
             cachedStore[dateStr] = parsedList;
             const keys = Object.keys(cachedStore).sort();
@@ -1232,7 +1233,7 @@ class AppStateManager {
             }
             try {
               localStorage.setItem(
-                "SFG_QWEEKLE_STORE_V2",
+                "SFG_QWEEKLE_STORE_V3",
                 JSON.stringify(cachedStore),
               );
             } catch (err) {
@@ -1941,12 +1942,17 @@ class AppStateManager {
             }
           });
 
-          let age = bestChild.age || "";
-          if (!age && (bestChild.birthday_at || bestChild.birthdate)) {
-            const bYear = new Date(
-              bestChild.birthday_at || bestChild.birthdate,
-            ).getFullYear();
-            if (!isNaN(bYear)) age = targetDateObj.getFullYear() - bYear;
+          let age = bestChild.age || bestChild.age_years || "";
+          if (!age && (bestChild.birthday_at || bestChild.birthdate || bestChild.date_naissance)) {
+            const bDate = new Date(
+              bestChild.birthday_at || bestChild.birthdate || bestChild.date_naissance,
+            );
+            if (!isNaN(bDate.getTime())) {
+              let calcAge = targetDateObj.getFullYear() - bDate.getFullYear();
+              const m = targetDateObj.getMonth() - bDate.getMonth();
+              if (m < 0 || (m === 0 && targetDateObj.getDate() < bDate.getDate())) calcAge--;
+              age = calcAge;
+            }
           }
 
           enfantAnniversaire = {
@@ -2703,9 +2709,15 @@ class AppStateManager {
         (item.order.sub_client || item.order.beneficiary || item.order.child));
     if (sc) {
       let age = sc.age || sc.age_years || "";
-      if (!age && sc.birthdate) {
-        const bYear = new Date(sc.birthdate).getFullYear();
-        if (!isNaN(bYear)) age = new Date().getFullYear() - bYear;
+      if (!age && (sc.birthdate || sc.birthday_at || sc.date_naissance)) {
+        const bDate = new Date(sc.birthdate || sc.birthday_at || sc.date_naissance);
+        if (!isNaN(bDate.getTime())) {
+           const eventDate = item.start_at ? new Date(item.start_at) : new Date();
+           let calcAge = eventDate.getFullYear() - bDate.getFullYear();
+           const m = eventDate.getMonth() - bDate.getMonth();
+           if (m < 0 || (m === 0 && eventDate.getDate() < bDate.getDate())) calcAge--;
+           age = calcAge;
+        }
       }
       return {
         prenom: sc.firstname || sc.prenom || sc.name || "???",
@@ -2730,10 +2742,16 @@ class AppStateManager {
         parentClient.contacts;
       if (Array.isArray(list) && list.length > 0) {
         const firstChild = list[0];
-        let age = firstChild.age || "";
-        if (!age && firstChild.birthdate) {
-          const bYear = new Date(firstChild.birthdate).getFullYear();
-          if (!isNaN(bYear)) age = new Date().getFullYear() - bYear;
+        let age = firstChild.age || firstChild.age_years || "";
+        if (!age && (firstChild.birthdate || firstChild.birthday_at || firstChild.date_naissance)) {
+          const bDate = new Date(firstChild.birthdate || firstChild.birthday_at || firstChild.date_naissance);
+          if (!isNaN(bDate.getTime())) {
+             const eventDate = item.start_at ? new Date(item.start_at) : new Date();
+             let calcAge = eventDate.getFullYear() - bDate.getFullYear();
+             const m = eventDate.getMonth() - bDate.getMonth();
+             if (m < 0 || (m === 0 && eventDate.getDate() < bDate.getDate())) calcAge--;
+             age = calcAge;
+          }
         }
         return {
           prenom:
