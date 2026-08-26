@@ -1151,7 +1151,7 @@ class AppStateManager {
               const chunkedIds = activeOrderIds.slice(0, 50); // Éviter une URL trop longue
               const orderFilter = chunkedIds.map((id) => `"${id}"`).join(",");
               const optUrl = `${CONFIG.SUPABASE_URL}/rest/v1/booking_activities?select=*&order_id=in.(${orderFilter})&order=pack_step.asc`;
-              const optRes = await fetch(optUrl + `&_=${Date.now()}`, {
+              const optRes = await fetch(optUrl, {
                 method: "GET",
                 headers: {
                   apikey: CONFIG.SUPABASE_KEY,
