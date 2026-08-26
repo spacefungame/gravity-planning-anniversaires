@@ -822,6 +822,7 @@ class AppStateManager {
   }
 
   async fetchAndSyncQweekleReservations(dateStr) {
+    if (dateStr === true || !dateStr) dateStr = this.currentDate;
     if (typeof CONFIG === "undefined") {
       return {
         status: "fallback",
@@ -997,9 +998,9 @@ class AppStateManager {
               const nextDate = new Date(dateStr);
               nextDate.setDate(nextDate.getDate() + 1);
               const nextDateStr = nextDate.toISOString().split("T")[0];
-              const supaUrl = `${CONFIG.SUPABASE_URL}/rest/v1/booking_activities?select=order_id,raw_payload&start_at=gte.${prevDateStr}T12:00:00Z&start_at=lt.${nextDateStr}T23:59:59Z`;
+              const supaUrl = `${CONFIG.SUPABASE_URL}/rest/v1/booking_activities?select=order_id,qweekle_booking_id,raw_payload&start_at=gte.${prevDateStr}T12:00:00Z&start_at=lt.${nextDateStr}T23:59:59Z`;
 
-              const responseSupa = await fetch(supaUrl + `&_=${Date.now()}`, {
+              const responseSupa = await fetch(supaUrl, {
                 method: "GET",
                 headers: {
                   apikey: CONFIG.SUPABASE_KEY,
@@ -1128,7 +1129,7 @@ class AppStateManager {
         const nextDateStr = nextDate.toISOString().split("T")[0];
         const supaUrl = `${CONFIG.SUPABASE_URL}/rest/v1/booking_activities?select=*&start_at=gte.${prevDateStr}T12:00:00Z&start_at=lt.${nextDateStr}T23:59:59Z&order=order_id,pack_step.asc`;
 
-        const response = await fetch(supaUrl + `&_=${Date.now()}`, {
+        const response = await fetch(supaUrl, {
           method: "GET",
           headers: {
             apikey: CONFIG.SUPABASE_KEY,
