@@ -693,9 +693,16 @@ function renderLaserPlanning() {
       let isAnniv = false;
       let suffix = "";
       if (r.categories && r.categories.includes("anniversaire")) isAnniv = true;
-      if (r.enfantAnniversaire && r.enfantAnniversaire.prenom) {
+      
+      const customEnfants = appState.getQweekleCustomEnfants(r.id) || {};
+      let prenomEnfant = customEnfants[0]?.nom;
+      if (!prenomEnfant && r.enfantAnniversaire && r.enfantAnniversaire.prenom) {
+          prenomEnfant = r.enfantAnniversaire.prenom;
+      }
+      
+      if (prenomEnfant && prenomEnfant !== "???") {
           isAnniv = true;
-          suffix = ` (${r.enfantAnniversaire.prenom})`;
+          suffix = ` (${prenomEnfant})`;
       }
       
       let tags = [];
@@ -848,9 +855,16 @@ function renderTeamPlanning() {
       let isAnniv = false;
       let suffix = "";
       if (r.categories && r.categories.includes("anniversaire")) isAnniv = true;
-      if (r.enfantAnniversaire && r.enfantAnniversaire.prenom) {
+      
+      const customEnfants = appState.getQweekleCustomEnfants(r.id) || {};
+      let prenomEnfant = customEnfants[0]?.nom;
+      if (!prenomEnfant && r.enfantAnniversaire && r.enfantAnniversaire.prenom) {
+          prenomEnfant = r.enfantAnniversaire.prenom;
+      }
+      
+      if (prenomEnfant && prenomEnfant !== "???") {
           isAnniv = true;
-          suffix = ` (${r.enfantAnniversaire.prenom})`;
+          suffix = ` (${prenomEnfant})`;
       }
       
       let tags = [];
@@ -1000,9 +1014,16 @@ function renderQuizPlanning() {
       let isAnniv = false;
       let suffix = "";
       if (r.categories && r.categories.includes("anniversaire")) isAnniv = true;
-      if (r.enfantAnniversaire && r.enfantAnniversaire.prenom) {
+      
+      const customEnfants = appState.getQweekleCustomEnfants(r.id) || {};
+      let prenomEnfant = customEnfants[0]?.nom;
+      if (!prenomEnfant && r.enfantAnniversaire && r.enfantAnniversaire.prenom) {
+          prenomEnfant = r.enfantAnniversaire.prenom;
+      }
+      
+      if (prenomEnfant && prenomEnfant !== "???") {
           isAnniv = true;
-          suffix = ` (${r.enfantAnniversaire.prenom})`;
+          suffix = ` (${prenomEnfant})`;
       }
       
       let tags = [];
