@@ -749,7 +749,7 @@ class AppStateManager {
   getQweekleReservationsForDate(dateStr) {
     // 1. Vérifier si des données Qweekle synchronisées ou en cache sont disponibles pour cette date
     const cachedStore = this.hasLocalStorage()
-      ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_STORE_V4") || "{}")
+      ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_STORE_V5") || "{}")
       : {};
     if (cachedStore[dateStr] && Array.isArray(cachedStore[dateStr])) {
       // Ne pas utiliser un cache démo ancien (Marc Dupont QW-90102) si la base Supabase est active
@@ -1108,7 +1108,7 @@ class AppStateManager {
 
           if (this.hasLocalStorage()) {
             const cachedStore = JSON.parse(
-              localStorage.getItem("SFG_QWEEKLE_STORE_V4") || "{}",
+              localStorage.getItem("SFG_QWEEKLE_STORE_V5") || "{}",
             );
             cachedStore[dateStr] = parsedList;
             const keys = Object.keys(cachedStore).sort();
@@ -1117,7 +1117,7 @@ class AppStateManager {
             }
             try {
               localStorage.setItem(
-                "SFG_QWEEKLE_STORE_V4",
+                "SFG_QWEEKLE_STORE_V5",
                 JSON.stringify(cachedStore),
               );
             } catch (err) {
@@ -1242,7 +1242,7 @@ class AppStateManager {
 
           if (this.hasLocalStorage()) {
             const cachedStore = JSON.parse(
-              localStorage.getItem("SFG_QWEEKLE_STORE_V4") || "{}",
+              localStorage.getItem("SFG_QWEEKLE_STORE_V5") || "{}",
             );
             cachedStore[dateStr] = parsedList;
             const keys = Object.keys(cachedStore).sort();
@@ -1251,7 +1251,7 @@ class AppStateManager {
             }
             try {
               localStorage.setItem(
-                "SFG_QWEEKLE_STORE_V4",
+                "SFG_QWEEKLE_STORE_V5",
                 JSON.stringify(cachedStore),
               );
             } catch (err) {
