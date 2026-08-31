@@ -672,9 +672,16 @@ class AppStateManager {
                  if (detected.toLowerCase() === "null") {
                     shouldIgnore = true;
                  } else {
-                    const participantMatch = detected.match(/Changement du nombre de participants\s*:\s*(\d+)/i);
-                    if (participantMatch) {
-                       const alertPax = parseInt(participantMatch[1], 10);
+                    let alertPax = null;
+                    const pMatch1 = detected.match(/Changement du nombre de participants\s*:\s*(\d+)/i);
+                    const pMatch2 = detected.match(/(?:passe|passant) de \d+ [aà] (\d+)/i);
+                    const pMatch3 = detected.match(/(\d+)\s*(?:personnes|enfants|participants|jeunes)/i);
+                    
+                    if (pMatch1) alertPax = parseInt(pMatch1[1], 10);
+                    else if (pMatch2) alertPax = parseInt(pMatch2[1], 10);
+                    else if (pMatch3) alertPax = parseInt(pMatch3[1], 10);
+
+                    if (alertPax !== null) {
                        const bookingPax = parseInt(booking.nbPersonnes || booking.personnes, 10);
                        if (!isNaN(alertPax) && !isNaN(bookingPax) && alertPax === bookingPax) {
                            shouldIgnore = true;
