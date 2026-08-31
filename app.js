@@ -1560,17 +1560,7 @@ function renderPlanningAnniversaireA4() {
   if (dateBanner) dateBanner.textContent = formattedDate;
 
   // Récupérer toutes les réservations Qweekle
-  let allReservations = appState.getQweekleReservationsForDate(appState.currentDate) || [];
-  
-  // Filtrer les annulées et brouillons
-  let reservations = allReservations.filter(
-      (r) =>
-          r.statut &&
-          r.statut.toLowerCase() !== "annulée" &&
-          r.statut.toLowerCase() !== "brouillon" &&
-          r.statut.toLowerCase() !== "annulee" &&
-          r.statut.toLowerCase() !== "liste d'attente"
-  );
+  let reservations = appState.getQweekleReservationsForDate(appState.currentDate) || [];
   
   // Filtrer uniquement celles qui sont des "anniversaires" ou "évènements adultes" ou qui ont une "table réservée"
   reservations = reservations.filter(res => {
@@ -1897,17 +1887,7 @@ function renderPostIts() {
     if (!container) return;
     
     // Récupérer toutes les réservations
-    let allReservations = appState.getQweekleReservationsForDate(appState.currentDate) || [];
-    
-    // Filtrer les annulées et brouillons
-    let reservations = allReservations.filter(
-        (r) =>
-            r.statut &&
-            r.statut.toLowerCase() !== "annulée" &&
-            r.statut.toLowerCase() !== "brouillon" &&
-            r.statut.toLowerCase() !== "annulee" &&
-            r.statut.toLowerCase() !== "liste d'attente"
-    );
+    let reservations = appState.getQweekleReservationsForDate(appState.currentDate) || [];
     
     // Trier par heure d'arrivée
     reservations.sort((a, b) => (a.heureArrivee || "").localeCompare(b.heureArrivee || ""));
