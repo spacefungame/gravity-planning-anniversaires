@@ -1559,8 +1559,18 @@ function renderPlanningAnniversaireA4() {
   const dateBanner = document.getElementById("a4-anniv-date");
   if (dateBanner) dateBanner.textContent = formattedDate;
 
-  // Récupérer et filtrer les réservations Qweekle
-  let reservations = appState.getQweekleReservationsForDate(appState.currentDate) || [];
+  // Récupérer toutes les réservations Qweekle
+  let allReservations = appState.getQweekleReservationsForDate(appState.currentDate) || [];
+  
+  // Filtrer les annulées et brouillons
+  let reservations = allReservations.filter(
+      (r) =>
+          r.statut &&
+          r.statut.toLowerCase() !== "annulée" &&
+          r.statut.toLowerCase() !== "brouillon" &&
+          r.statut.toLowerCase() !== "annulee" &&
+          r.statut.toLowerCase() !== "liste d'attente"
+  );
   
   // Filtrer uniquement celles qui sont des "anniversaires" ou "évènements adultes" ou qui ont une "table réservée"
   reservations = reservations.filter(res => {
@@ -1887,7 +1897,17 @@ function renderPostIts() {
     if (!container) return;
     
     // Récupérer toutes les réservations
-    let reservations = appState.getQweekleReservationsForDate(appState.currentDate) || [];
+    let allReservations = appState.getQweekleReservationsForDate(appState.currentDate) || [];
+    
+    // Filtrer les annulées et brouillons
+    let reservations = allReservations.filter(
+        (r) =>
+            r.statut &&
+            r.statut.toLowerCase() !== "annulée" &&
+            r.statut.toLowerCase() !== "brouillon" &&
+            r.statut.toLowerCase() !== "annulee" &&
+            r.statut.toLowerCase() !== "liste d'attente"
+    );
     
     // Trier par heure d'arrivée
     reservations.sort((a, b) => (a.heureArrivee || "").localeCompare(b.heureArrivee || ""));
@@ -1899,8 +1919,21 @@ function renderPostIts() {
         reservations.forEach(res => {
             res.manualTable = appState.getQweekleCustomTable(res.id);
         });
+        
+        // IMPORTANT: Ne passer à l'assignateur QUE les réservations qui nécessitent une table
+        // pour correspondre EXACTEMENT à la logique de la vue Anniversaire A4
+        const tableReservations = reservations.filter(res => {
+            const isAnniv = res.categories && res.categories.includes("anniversaire");
+            const isAdult = res.categories && (res.categories.includes("évènement adulte") || res.categories.includes("team building"));
+            const hasTable = res.activites && res.activites.some(a => 
+                a.nom.toLowerCase().includes("table réservée") || 
+                a.nom.toLowerCase().includes("table reservee")
+            );
+            return isAnniv || isAdult || hasTable;
+        });
+
         const assigner = new window.TableAssigner(currentTablesConfig);
-        tableAssignments = assigner.assign(reservations);
+        tableAssignments = assigner.assign(tableReservations);
     }
 
     container.innerHTML = "";
