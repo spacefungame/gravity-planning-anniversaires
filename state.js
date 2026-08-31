@@ -1818,21 +1818,24 @@ class AppStateManager {
         const catLower = (act.category || "").toLowerCase();
         const lblRaw = (act.label || "").trim();
         let lbl = this.cleanLabel(lblRaw);
+        
+        const isOptionKeyword = this.isOptionLabel(catLower) || this.isOptionLabel(lbl.toLowerCase());
+
         if (lbl.includes("+")) {
-          lbl = lbl
-            .split("+")
-            .map((p) => this.cleanLabel(p.trim()))
-            .filter((p) => p && !this.isOptionLabel(p))
-            .join(" + ");
+          // If it's a known option/product, don't strip its own option keywords!
+          if (!isOptionKeyword) {
+            lbl = lbl
+              .split("+")
+              .map((p) => this.cleanLabel(p.trim()))
+              .filter((p) => p && !this.isOptionLabel(p))
+              .join(" + ");
+          }
         }
         const lblLower = lbl.toLowerCase();
         const typeRaw = (act.raw_payload?.type || act.type || "").toUpperCase();
 
         // On ne met jamais en option une activité qui est déjà prévue à une heure précise (ex: table réservée)
         const isRealActivity = act.start_at && !this.isOptionLabel(lblLower);
-
-        const isOptionKeyword =
-          this.isOptionLabel(catLower) || this.isOptionLabel(lblLower);
 
         // Filtre anti-pack: ne pas afficher l'activité principale dans les options
         const matchesNomPack =
@@ -1876,11 +1879,14 @@ class AppStateManager {
                 const oiLabelRaw = (oi.label || oi.nom || "").trim();
                 let oiLabel = this.cleanLabel(oiLabelRaw);
                 if (oiLabel.includes("+")) {
-                  oiLabel = oiLabel
-                    .split("+")
-                    .map((p) => this.cleanLabel(p.trim()))
-                    .filter((p) => p && !this.isOptionLabel(p))
-                    .join(" + ");
+                  const oiIsOptionKeyword = this.isOptionLabel(oiLabel.toLowerCase()) || this.isOptionLabel((oi.category || "").toLowerCase());
+                  if (!oiIsOptionKeyword) {
+                    oiLabel = oiLabel
+                      .split("+")
+                      .map((p) => this.cleanLabel(p.trim()))
+                      .filter((p) => p && !this.isOptionLabel(p))
+                      .join(" + ");
+                  }
                 }
                 const oiLower = oiLabel.toLowerCase();
                 const oiMatchesPack =
