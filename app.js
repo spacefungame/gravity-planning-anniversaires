@@ -715,7 +715,12 @@ function renderLaserPlanning() {
       }
       const tagStr = tags.length > 0 ? ` <span style="font-size:0.65rem; font-weight:normal; color:#4a5568;">[${tags.join(',')}]</span>` : "";
       
-      const nomComplet = `${r.nom} ${r.prenom || ""}${suffix}${tagStr}`.trim();
+      const isIllimite = (r.pack || r.nomPack || "").toLowerCase().includes("illimit") || 
+                         (r.typeActivite || "").toLowerCase().includes("illimit") || 
+                         (r.activites && r.activites.some(a => (a.nom || "").toLowerCase().includes("illimit")));
+      const illimiteStr = isIllimite ? ` <span style="font-size:0.7rem; font-weight:bold; color:#e53e3e;">[ILLIMITÉ]</span>` : "";
+      
+      const nomComplet = `${r.nom} ${r.prenom || ""}${suffix}${tagStr}${illimiteStr}`.trim();
       
       // Trouver les activités Laser
       const laserActs = (r.activites || []).filter(a => (a.nom || "").toLowerCase().includes("laser"));
@@ -877,7 +882,12 @@ function renderTeamPlanning() {
       }
       const tagStr = tags.length > 0 ? ` <span style="font-size:0.65rem; font-weight:normal; color:#4a5568;">[${tags.join(',')}]</span>` : "";
       
-      const nomComplet = `${r.nom} ${r.prenom || ""}${suffix}${tagStr}`.trim();
+      const isIllimite = (r.pack || r.nomPack || "").toLowerCase().includes("illimit") || 
+                         (r.typeActivite || "").toLowerCase().includes("illimit") || 
+                         (r.activites && r.activites.some(a => (a.nom || "").toLowerCase().includes("illimit")));
+      const illimiteStr = isIllimite ? ` <span style="font-size:0.7rem; font-weight:bold; color:#e53e3e;">[ILLIMITÉ]</span>` : "";
+      
+      const nomComplet = `${r.nom} ${r.prenom || ""}${suffix}${tagStr}${illimiteStr}`.trim();
       
       // Trouver les activités Team Game
       const teamActs = (r.activites || []).filter(a => (a.nom || "").toLowerCase().includes("team") || (a.nom || "").toLowerCase().includes("prison") || (a.nom || "").toLowerCase().includes("fort"));
@@ -1036,7 +1046,12 @@ function renderQuizPlanning() {
       }
       const tagStr = tags.length > 0 ? ` <span style="font-size:0.65rem; font-weight:normal; color:#4a5568;">[${tags.join(',')}]</span>` : "";
       
-      const nomComplet = `${r.nom} ${r.prenom || ""}${suffix}${tagStr}`.trim();
+      const isIllimite = (r.pack || r.nomPack || "").toLowerCase().includes("illimit") || 
+                         (r.typeActivite || "").toLowerCase().includes("illimit") || 
+                         (r.activites && r.activites.some(a => (a.nom || "").toLowerCase().includes("illimit")));
+      const illimiteStr = isIllimite ? ` <span style="font-size:0.7rem; font-weight:bold; color:#e53e3e;">[ILLIMITÉ]</span>` : "";
+      
+      const nomComplet = `${r.nom} ${r.prenom || ""}${suffix}${tagStr}${illimiteStr}`.trim();
       
       // Trouver les activités Quiz Game
       const quizActs = (r.activites || []).filter(a => (a.nom || "").toLowerCase().includes("quiz"));
