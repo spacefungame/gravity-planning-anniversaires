@@ -749,7 +749,7 @@ class AppStateManager {
   getQweekleReservationsForDate(dateStr) {
     // 1. Vérifier si des données Qweekle synchronisées ou en cache sont disponibles pour cette date
     const cachedStore = this.hasLocalStorage()
-      ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_STORE_V5") || "{}")
+      ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_STORE_V6") || "{}")
       : {};
     if (cachedStore[dateStr] && Array.isArray(cachedStore[dateStr])) {
       // Ne pas utiliser un cache démo ancien (Marc Dupont QW-90102) si la base Supabase est active
@@ -1108,7 +1108,7 @@ class AppStateManager {
 
           if (this.hasLocalStorage()) {
             const cachedStore = JSON.parse(
-              localStorage.getItem("SFG_QWEEKLE_STORE_V5") || "{}",
+              localStorage.getItem("SFG_QWEEKLE_STORE_V6") || "{}",
             );
             cachedStore[dateStr] = parsedList;
             const keys = Object.keys(cachedStore).sort();
@@ -1117,7 +1117,7 @@ class AppStateManager {
             }
             try {
               localStorage.setItem(
-                "SFG_QWEEKLE_STORE_V5",
+                "SFG_QWEEKLE_STORE_V6",
                 JSON.stringify(cachedStore),
               );
             } catch (err) {
@@ -1242,7 +1242,7 @@ class AppStateManager {
 
           if (this.hasLocalStorage()) {
             const cachedStore = JSON.parse(
-              localStorage.getItem("SFG_QWEEKLE_STORE_V5") || "{}",
+              localStorage.getItem("SFG_QWEEKLE_STORE_V6") || "{}",
             );
             cachedStore[dateStr] = parsedList;
             const keys = Object.keys(cachedStore).sort();
@@ -1251,7 +1251,7 @@ class AppStateManager {
             }
             try {
               localStorage.setItem(
-                "SFG_QWEEKLE_STORE_V5",
+                "SFG_QWEEKLE_STORE_V6",
                 JSON.stringify(cachedStore),
               );
             } catch (err) {
@@ -2894,6 +2894,19 @@ class AppStateManager {
       )
     ) {
       cats.push("asbl");
+    }
+
+    // Correction majeure: Si c'est un anniversaire d'enfant, on retire les tags adultes erronés
+    // (ex: si le client est de type "entreprise", ça déclenchait "team building" à tort)
+    if (cats.includes("enfant") && cats.includes("anniversaire")) {
+       const tbIndex = cats.indexOf("team building");
+       if (tbIndex > -1) cats.splice(tbIndex, 1);
+       
+       const eaIndex = cats.indexOf("évènement adulte");
+       if (eaIndex > -1) cats.splice(eaIndex, 1);
+       
+       const adIndex = cats.indexOf("adulte");
+       if (adIndex > -1) cats.splice(adIndex, 1);
     }
 
     if (cats.length === 0) {
