@@ -749,7 +749,7 @@ class AppStateManager {
   getQweekleReservationsForDate(dateStr) {
     // 1. Vérifier si des données Qweekle synchronisées ou en cache sont disponibles pour cette date
     const cachedStore = this.hasLocalStorage()
-      ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_STORE_V7") || "{}")
+      ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_STORE_V8") || "{}")
       : {};
     if (cachedStore[dateStr] && Array.isArray(cachedStore[dateStr])) {
       // Ne pas utiliser un cache démo ancien (Marc Dupont QW-90102) si la base Supabase est active
@@ -1108,7 +1108,7 @@ class AppStateManager {
 
           if (this.hasLocalStorage()) {
             const cachedStore = JSON.parse(
-              localStorage.getItem("SFG_QWEEKLE_STORE_V7") || "{}",
+              localStorage.getItem("SFG_QWEEKLE_STORE_V8") || "{}",
             );
             cachedStore[dateStr] = parsedList;
             const keys = Object.keys(cachedStore).sort();
@@ -1117,7 +1117,7 @@ class AppStateManager {
             }
             try {
               localStorage.setItem(
-                "SFG_QWEEKLE_STORE_V7",
+                "SFG_QWEEKLE_STORE_V8",
                 JSON.stringify(cachedStore),
               );
             } catch (err) {
@@ -1242,7 +1242,7 @@ class AppStateManager {
 
           if (this.hasLocalStorage()) {
             const cachedStore = JSON.parse(
-              localStorage.getItem("SFG_QWEEKLE_STORE_V7") || "{}",
+              localStorage.getItem("SFG_QWEEKLE_STORE_V8") || "{}",
             );
             cachedStore[dateStr] = parsedList;
             const keys = Object.keys(cachedStore).sort();
@@ -1251,7 +1251,7 @@ class AppStateManager {
             }
             try {
               localStorage.setItem(
-                "SFG_QWEEKLE_STORE_V7",
+                "SFG_QWEEKLE_STORE_V8",
                 JSON.stringify(cachedStore),
               );
             } catch (err) {
@@ -1404,7 +1404,12 @@ class AppStateManager {
     // Regrouper par order_id ou par identifiant unique de réservation
     const groups = {};
     filteredRows.forEach((r) => {
+      // Pour grouper les activités d'une même réservation :
+      // On utilise en priorité l'ID du client. Cela permet de regrouper en un seul bloc
+      // si le client a fait plusieurs achats le même jour (ex: ajout de pizzas dans une 2e commande)
+      const clientId = r.raw_payload?.client?.id || r.client_id;
       const oid =
+        clientId ||
         r.order_id ||
         r.order_item?.order_id ||
         r.order_item?.order?.id ||
