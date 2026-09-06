@@ -749,7 +749,7 @@ class AppStateManager {
   getQweekleReservationsForDate(dateStr) {
     // 1. Vérifier si des données Qweekle synchronisées ou en cache sont disponibles pour cette date
     const cachedStore = this.hasLocalStorage()
-      ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_STORE_V8") || "{}")
+      ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_STORE_V9") || "{}")
       : {};
     if (cachedStore[dateStr] && Array.isArray(cachedStore[dateStr])) {
       // Ne pas utiliser un cache démo ancien (Marc Dupont QW-90102) si la base Supabase est active
@@ -1108,7 +1108,7 @@ class AppStateManager {
 
           if (this.hasLocalStorage()) {
             const cachedStore = JSON.parse(
-              localStorage.getItem("SFG_QWEEKLE_STORE_V8") || "{}",
+              localStorage.getItem("SFG_QWEEKLE_STORE_V9") || "{}",
             );
             cachedStore[dateStr] = parsedList;
             const keys = Object.keys(cachedStore).sort();
@@ -1117,7 +1117,7 @@ class AppStateManager {
             }
             try {
               localStorage.setItem(
-                "SFG_QWEEKLE_STORE_V8",
+                "SFG_QWEEKLE_STORE_V9",
                 JSON.stringify(cachedStore),
               );
             } catch (err) {
@@ -1242,7 +1242,7 @@ class AppStateManager {
 
           if (this.hasLocalStorage()) {
             const cachedStore = JSON.parse(
-              localStorage.getItem("SFG_QWEEKLE_STORE_V8") || "{}",
+              localStorage.getItem("SFG_QWEEKLE_STORE_V9") || "{}",
             );
             cachedStore[dateStr] = parsedList;
             const keys = Object.keys(cachedStore).sort();
@@ -1251,7 +1251,7 @@ class AppStateManager {
             }
             try {
               localStorage.setItem(
-                "SFG_QWEEKLE_STORE_V8",
+                "SFG_QWEEKLE_STORE_V9",
                 JSON.stringify(cachedStore),
               );
             } catch (err) {
@@ -1567,27 +1567,28 @@ class AppStateManager {
       );
       let nbPersonnes = 0;
       if (arrivGroup.length > 0) {
-        nbPersonnes = arrivGroup.reduce(
-          (sum, a) =>
-            sum +
-            (Number(a.qty) ||
-              Number(a.raw_payload?.client?.qty) ||
-              Number(a.raw_payload?.qty) ||
-              0),
-          0,
-        );
+        let currentTotal = 0;
+        arrivGroup.forEach(a => {
+          const qty = Number(a.qty) || Number(a.raw_payload?.client?.qty) || Number(a.raw_payload?.qty) || 0;
+          if (currentTotal === qty) {
+             currentTotal = Math.max(currentTotal, qty);
+          } else {
+             currentTotal += qty;
+          }
+        });
+        nbPersonnes = currentTotal;
       }
       if (!nbPersonnes || isNaN(nbPersonnes) || nbPersonnes <= 0) {
-        nbPersonnes = Math.max(
-          ...group.map(
-            (a) =>
-              Number(a.qty) ||
-              Number(a.raw_payload?.client?.qty) ||
-              Number(a.raw_payload?.qty) ||
-              0,
-          ),
-          1,
-        );
+        let backupTotal = 0;
+        group.forEach(a => {
+          const qty = Number(a.qty) || Number(a.raw_payload?.client?.qty) || Number(a.raw_payload?.qty) || 0;
+          if (backupTotal === qty) {
+             backupTotal = Math.max(backupTotal, qty);
+          } else {
+             backupTotal += qty;
+          }
+        });
+        nbPersonnes = backupTotal || 1;
       }
 
       // 4. Activités détaillées (seulement les activités, pas les produits injectés)
