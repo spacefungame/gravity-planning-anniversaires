@@ -749,7 +749,7 @@ class AppStateManager {
   getQweekleReservationsForDate(dateStr) {
     // 1. Vérifier si des données Qweekle synchronisées ou en cache sont disponibles pour cette date
     const cachedStore = this.hasLocalStorage()
-      ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_STORE_V6") || "{}")
+      ? JSON.parse(localStorage.getItem("SFG_QWEEKLE_STORE_V7") || "{}")
       : {};
     if (cachedStore[dateStr] && Array.isArray(cachedStore[dateStr])) {
       // Ne pas utiliser un cache démo ancien (Marc Dupont QW-90102) si la base Supabase est active
@@ -1108,7 +1108,7 @@ class AppStateManager {
 
           if (this.hasLocalStorage()) {
             const cachedStore = JSON.parse(
-              localStorage.getItem("SFG_QWEEKLE_STORE_V6") || "{}",
+              localStorage.getItem("SFG_QWEEKLE_STORE_V7") || "{}",
             );
             cachedStore[dateStr] = parsedList;
             const keys = Object.keys(cachedStore).sort();
@@ -1117,7 +1117,7 @@ class AppStateManager {
             }
             try {
               localStorage.setItem(
-                "SFG_QWEEKLE_STORE_V6",
+                "SFG_QWEEKLE_STORE_V7",
                 JSON.stringify(cachedStore),
               );
             } catch (err) {
@@ -1242,7 +1242,7 @@ class AppStateManager {
 
           if (this.hasLocalStorage()) {
             const cachedStore = JSON.parse(
-              localStorage.getItem("SFG_QWEEKLE_STORE_V6") || "{}",
+              localStorage.getItem("SFG_QWEEKLE_STORE_V7") || "{}",
             );
             cachedStore[dateStr] = parsedList;
             const keys = Object.keys(cachedStore).sort();
@@ -1251,7 +1251,7 @@ class AppStateManager {
             }
             try {
               localStorage.setItem(
-                "SFG_QWEEKLE_STORE_V6",
+                "SFG_QWEEKLE_STORE_V7",
                 JSON.stringify(cachedStore),
               );
             } catch (err) {
@@ -2494,9 +2494,17 @@ class AppStateManager {
         if (act.id && !existing.ids.includes(act.id)) {
           existing.ids.push(act.id);
         }
-        existing.nbPersonnes =
-          (Number(existing.nbPersonnes) || 0) +
-          (Number(act.nbPersonnes) || Number(fallbackQty) || 1);
+        const newQty = Number(act.nbPersonnes) || Number(fallbackQty) || 1;
+        const currentQty = Number(existing.nbPersonnes) || 0;
+        
+        // Si les quantités sont identiques, c'est probablement un doublon généré par Qweekle
+        // (ex: un client achète 2 packs pour les mêmes 10 personnes, Qweekle génère 2 'Accueil' de 10)
+        // Si les quantités sont différentes, c'est probablement un ajout (ex: 10 personnes + 2 ajoutées plus tard)
+        if (currentQty === newQty) {
+          existing.nbPersonnes = Math.max(currentQty, newQty);
+        } else {
+          existing.nbPersonnes = currentQty + newQty;
+        }
       }
     });
 
